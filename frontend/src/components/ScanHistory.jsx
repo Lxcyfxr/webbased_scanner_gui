@@ -1,96 +1,79 @@
-import { List, Tag, Typography, Divider, Popconfirm, Button } from 'antd'
+import { List, Tag, Typography, Divider, Popconfirm, Button, Space } from 'antd'
 import { DeleteOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listScans, deleteScan } from '../api'
+import { listJobs, deleteJob } from '../api'
 
 const { Text } = Typography
 
 const STATUS_COLOR = { done: 'green', running: 'blue', failed: 'red', pending: 'orange', cancelled: 'warning' }
+const TOOL_COLOR   = { nmap: 'geekblue', ffuf: 'purple', feroxbuster: 'magenta', gobuster: 'cyan', wenum: 'volcano' }
 
-export default function ScanHistory({ onSelect }) {
-  const [scans, setScans] = useState([])
+// tool=null means show all fuzzing tools; tool="nmap" means nmap only
+export default function ScanHistory({ onSelect, tool = 'nmap', fuzzing = false }) {
+  const [jobs, setJobs] = useState([])
   const navigate = useNavigate()
 
-  const load = () => listScans().then(setScans).catch(() => {})
-  useEffect(() => { load() }, [])
+  const load = () => {
+    // for fuzzing page show all non-nmap jobs; for nmap page show nmap only
+    listJobs(fuzzing ? undefined : tool).then(all => {
+      const filtered = fuzzing ? all.filter(j => j.tool !== 'nmap') : all
+      setJobs(filtered)
+    }).catch(() => {})
+  }
+
+  useEffect(() => { load() }, [tool, fuzzing])
 
   const handleDelete = async (id, e) => {
     e.stopPropagation()
-    await deleteScan(id)
+    await deleteJob(id)
     load()
   }
 
-  const handleSelect = (scan) => {
-    if (!scan.result_json) return
-    const parsed = JSON.parse(scan.result_json)
-    onSelect({ ...parsed, target: scan.target, scanId: scan.id, cancelled: scan.status === 'cancelled' })
+  const handleSelect = (job) => {
+    if (!job.result_json) return
+    onSelect(job)
   }
 
-  const displayed = scans.slice(0, 3)
-  const hasMore = scans.length > 3
+  const displayed = jobs.slice(0, 3)
+  const hasMore   = jobs.length > 3
 
   return (
     <div>
-      <Text strong style={{ fontSize: 14 }}>Recent Scans</Text>
+      <Text strong style={{ fontSize: 14 }}>Recent Jobs</Text>
       <Divider style={{ margin: '8px 0 12px' }} />
 
-      {scans.length === 0 && (
-        <Text type="secondary" style={{ fontSize: 12 }}>No scans yet</Text>
-      )}
+      {jobs.length === 0 && <Text type="secondary" style={{ fontSize: 12 }}>No jobs yet</Text>}
 
       <List
         dataSource={displayed}
         size="small"
-        renderItem={scan => (
+        renderItem={job => (
           <List.Item
-            style={{
-              cursor: scan.result_json ? 'pointer' : 'default',
-              padding: '6px 4px',
-              borderRadius: 4,
-            }}
-            onClick={() => handleSelect(scan)}
+            style={{ cursor: job.result_json ? 'pointer' : 'default', padding: '6px 4px', borderRadius: 4 }}
+            onClick={() => handleSelect(job)}
             actions={[
-              <Popconfirm
-                title="Delete this scan?"
-                onConfirm={e => handleDelete(scan.id, e)}
-                onClick={e => e.stopPropagation()}
-                okText="Yes"
-                cancelText="No"
-              >
-                <DeleteOutlined
-                  style={{ color: '#ff4d4f', fontSize: 13 }}
-                  onClick={e => e.stopPropagation()}
-                />
+              <Popconfirm title="Delete this job?" onConfirm={e => handleDelete(job.id, e)} onClick={e => e.stopPropagation()} okText="Yes" cancelText="No">
+                <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 13 }} onClick={e => e.stopPropagation()} />
               </Popconfirm>,
             ]}
           >
             <List.Item.Meta
-              title={
-                <Text ellipsis style={{ maxWidth: 160, fontSize: 12 }}>
-                  {scan.target}
-                </Text>
-              }
+              title={<Text ellipsis style={{ maxWidth: 150, fontSize: 12 }}>{job.target}</Text>}
               description={
-                <Tag color={STATUS_COLOR[scan.status] || 'default'} style={{ fontSize: 11 }}>
-                  {scan.status}
-                </Tag>
+                <Space size={4}>
+                  {fuzzing && <Tag color={TOOL_COLOR[job.tool] || 'default'} style={{ fontSize: 10 }}>{job.tool}</Tag>}
+                  <Tag color={STATUS_COLOR[job.status] || 'default'} style={{ fontSize: 11 }}>{job.status}</Tag>
+                </Space>
               }
             />
           </List.Item>
         )}
       />
 
-      {(hasMore || scans.length > 0) && (
-        <Button
-          type="dashed"
-          size="small"
-          block
-          icon={<UnorderedListOutlined />}
-          style={{ marginTop: 8 }}
-          onClick={() => navigate('/history')}
-        >
-          {hasMore ? 'More' : 'View all scans'}
+      {(hasMore || jobs.length > 0) && (
+        <Button type="dashed" size="small" block icon={<UnorderedListOutlined />} style={{ marginTop: 8 }} onClick={() => navigate('/history')}>
+          {hasMore ? 'More' : 'View all jobs'}
         </Button>
       )}
     </div>

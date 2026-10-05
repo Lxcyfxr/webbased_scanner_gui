@@ -3,64 +3,110 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import asyncio
 import json
+import os
 from uuid import uuid4
 from datetime import datetime
 
-from .database import engine, get_db, Base
-from .models import Scan
-from .schemas import ScanCreate, ScanResponse
-from .scanner import validate_target, run_scan
+from .database import engine, get_db, Base, run_migrations
+from .models import Job
+from .schemas import JobCreate, JobResponse
+from .runner import run_job
+from .tools.nmap import NmapTool
+from .tools.ffuf import FfufTool
+from .tools.feroxbuster import FeroxbusterTool
+from .tools.gobuster import GobusterTool
+from .tools.wenum import WenumTool
 
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
-app = FastAPI(title="nmap Web GUI API", version="1.0.0")
+TOOLS = {
+    "nmap":         NmapTool(),
+    "ffuf":         FfufTool(),
+    "feroxbuster":  FeroxbusterTool(),
+    "gobuster":     GobusterTool(),
+    "wenum":        WenumTool(),
+}
+
+WORDLIST_PRESETS = [
+    {"label": "dirb / common (4614)",           "path": "/usr/share/wordlists/dirb/common.txt"},
+    {"label": "dirb / big (20469)",              "path": "/usr/share/wordlists/dirb/big.txt"},
+    {"label": "SecLists / common",              "path": "/usr/share/seclists/Discovery/Web-Content/common.txt"},
+    {"label": "SecLists / big",                 "path": "/usr/share/seclists/Discovery/Web-Content/big.txt"},
+    {"label": "SecLists / raft-medium-dirs",    "path": "/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt"},
+    {"label": "SecLists / directory-list-2.3-medium", "path": "/usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt"},
+]
+
+app = FastAPI(title="Web Security GUI API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # lock this down in production
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# In-memory queues for scans currently streaming output
 _active: dict[str, asyncio.Queue] = {}
 
 
-@app.post("/scans", response_model=ScanResponse, status_code=201)
-def create_scan(scan_in: ScanCreate, db: Session = Depends(get_db)):
-    if not validate_target(scan_in.target):
-        raise HTTPException(status_code=400, detail="Invalid target")
+# ── meta ──────────────────────────────────────────────────────────────────────
 
-    scan = Scan(
+@app.get("/tools")
+def list_tools():
+    return [{"name": t.name, "label": t.label} for t in TOOLS.values()]
+
+
+@app.get("/wordlists")
+def list_wordlists():
+    return [w for w in WORDLIST_PRESETS if os.path.exists(w["path"])]
+
+
+# ── jobs ──────────────────────────────────────────────────────────────────────
+
+@app.post("/jobs", response_model=JobResponse, status_code=201)
+def create_job(job_in: JobCreate, db: Session = Depends(get_db)):
+    tool = TOOLS.get(job_in.tool)
+    if not tool:
+        raise HTTPException(status_code=400, detail=f"Unknown tool: {job_in.tool}")
+    if not tool.validate_target(job_in.target):
+        raise HTTPException(status_code=400, detail="Invalid target for this tool")
+
+    job = Job(
         id=str(uuid4()),
-        target=scan_in.target,
-        options=json.dumps(scan_in.options.model_dump()),
+        tool=job_in.tool,
+        target=job_in.target,
+        options=json.dumps(job_in.options),
         status="pending",
     )
-    db.add(scan)
+    db.add(job)
     db.commit()
-    db.refresh(scan)
-    return scan
+    db.refresh(job)
+    return job
 
 
-@app.websocket("/ws/scans/{scan_id}")
-async def scan_stream(websocket: WebSocket, scan_id: str, db: Session = Depends(get_db)):
-    scan = db.query(Scan).filter(Scan.id == scan_id).first()
-    if not scan:
+@app.websocket("/ws/jobs/{job_id}")
+async def job_stream(websocket: WebSocket, job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
         await websocket.close(code=4004)
+        return
+
+    tool = TOOLS.get(job.tool)
+    if not tool:
+        await websocket.close(code=4003)
         return
 
     await websocket.accept()
 
     queue: asyncio.Queue = asyncio.Queue()
     cancel_event = asyncio.Event()
-    _active[scan_id] = queue
+    _active[job_id] = queue
 
-    scan.status = "running"
+    job.status = "running"
     db.commit()
 
-    options = json.loads(scan.options)
-    scan_task = asyncio.create_task(run_scan(scan.target, options, queue, cancel_event))
+    options = json.loads(job.options)
+    job_task = asyncio.create_task(run_job(tool, job.target, options, queue, cancel_event))
 
     async def recv_cancel():
         try:
@@ -78,56 +124,57 @@ async def scan_stream(websocket: WebSocket, scan_id: str, db: Session = Depends(
         while True:
             msg = await queue.get()
             await websocket.send_json(msg)
-
             if msg["type"] == "done":
-                if msg.get("cancelled"):
-                    scan.status = "cancelled"
-                else:
-                    scan.status = "done" if msg["success"] else "failed"
-                scan.result_xml = msg["xml"]
-                scan.result_json = json.dumps(msg["json"])
-                scan.finished_at = datetime.utcnow()
+                job.status = "cancelled" if msg.get("cancelled") else ("done" if msg["success"] else "failed")
+                job.result_json = json.dumps(msg["json"])
+                if job.tool == "nmap":
+                    job.result_xml = "\n".join(msg.get("xml_lines", []))
+                job.finished_at = datetime.utcnow()
                 db.commit()
                 break
     except WebSocketDisconnect:
-        scan_task.cancel()
-        scan.status = "failed"
-        scan.error = "Client disconnected"
+        job_task.cancel()
+        cancel_event.set()
+        job.status = "failed"
+        job.error = "Client disconnected"
         db.commit()
     finally:
         recv_task.cancel()
-        _active.pop(scan_id, None)
+        _active.pop(job_id, None)
 
 
-@app.get("/scans", response_model=list[ScanResponse])
-def list_scans(db: Session = Depends(get_db)):
-    return db.query(Scan).order_by(Scan.created_at.desc()).all()
+@app.get("/jobs", response_model=list[JobResponse])
+def list_jobs(tool: str | None = None, db: Session = Depends(get_db)):
+    q = db.query(Job).order_by(Job.created_at.desc())
+    if tool:
+        q = q.filter(Job.tool == tool)
+    return q.all()
 
 
-@app.get("/scans/{scan_id}", response_model=ScanResponse)
-def get_scan(scan_id: str, db: Session = Depends(get_db)):
-    scan = db.query(Scan).filter(Scan.id == scan_id).first()
-    if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
-    return scan
+@app.get("/jobs/{job_id}", response_model=JobResponse)
+def get_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
-@app.get("/scans/{scan_id}/xml")
-def get_scan_xml(scan_id: str, db: Session = Depends(get_db)):
-    scan = db.query(Scan).filter(Scan.id == scan_id).first()
-    if not scan or not scan.result_xml:
+@app.get("/jobs/{job_id}/xml")
+def get_job_xml(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job or not job.result_xml:
         raise HTTPException(status_code=404, detail="XML not available")
     return Response(
-        content=scan.result_xml,
+        content=job.result_xml,
         media_type="application/xml",
-        headers={"Content-Disposition": f"attachment; filename=scan_{scan_id}.xml"},
+        headers={"Content-Disposition": f"attachment; filename=scan_{job_id}.xml"},
     )
 
 
-@app.delete("/scans/{scan_id}", status_code=204)
-def delete_scan(scan_id: str, db: Session = Depends(get_db)):
-    scan = db.query(Scan).filter(Scan.id == scan_id).first()
-    if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
-    db.delete(scan)
+@app.delete("/jobs/{job_id}", status_code=204)
+def delete_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    db.delete(job)
     db.commit()
