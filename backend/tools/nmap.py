@@ -118,6 +118,10 @@ class NmapTool(BaseTool):
             cmd.extend(["--script", str(options["script"])])
         if options.get("script_args") and re.match(r"^[\w,\-\.=\'/]+$", str(options["script_args"])):
             cmd.extend(["--script-args", str(options["script_args"])])
+        proxy = options.get("proxy_url")
+        if proxy and re.match(r'^(http|https|socks4|socks5)://', proxy):
+            cmd.extend(["--proxies", proxy])
+
         cmd.append(target)
         return cmd
 

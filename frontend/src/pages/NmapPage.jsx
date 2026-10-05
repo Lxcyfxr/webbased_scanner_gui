@@ -5,6 +5,7 @@ import ScanHistory from '../components/ScanHistory'
 import ScanProgress from '../components/ScanProgress'
 import ScanResults  from '../components/ScanResults'
 import { createJob, openJobSocket } from '../api'
+import { getProxyUrl } from '../utils/proxy'
 
 const { Sider, Content } = Layout
 
@@ -24,7 +25,8 @@ export default function NmapPage() {
     setLines([]); setDisc({ hosts: [], ports: [] })
     setResult(null); setError(null)
     try {
-      const job = await createJob('nmap', target, options)
+      const proxyUrl = getProxyUrl()
+      const job = await createJob('nmap', target, { ...options, ...(proxyUrl ? { proxy_url: proxyUrl } : {}) })
       const ws  = openJobSocket(job.id, (msg) => {
         if (msg.type === 'progress')   setLines(p => [...p, msg])
         else if (msg.type === 'found_port') { setLines(p => [...p, msg]); setDisc(p => ({ ...p, ports: [...p.ports, msg] })) }

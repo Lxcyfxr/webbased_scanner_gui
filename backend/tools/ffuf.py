@@ -48,6 +48,10 @@ class FfufTool(BaseTool):
         if options.get("recursion"):
             cmd.extend(["-recursion", "-recursion-depth", str(options.get("recursion_depth", 2))])
 
+        proxy = options.get("proxy_url")
+        if proxy and re.match(r'^https?://', proxy):
+            cmd.extend(["-x", proxy])
+
         return cmd
 
     def parse_stdout_line(self, line: str) -> dict | None:

@@ -1,17 +1,24 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider, Layout, Typography, Switch, Space, theme as antTheme } from 'antd'
-import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined } from '@ant-design/icons'
+import { ConfigProvider, Layout, Typography, Switch, Space, Button, Badge, Tooltip, theme as antTheme } from 'antd'
+import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, GlobalOutlined } from '@ant-design/icons'
 import ActivityBar  from './components/ActivityBar'
+import ProxyModal   from './components/ProxyModal'
 import NmapPage     from './pages/NmapPage'
 import FuzzingPage  from './pages/FuzzingPage'
 import HistoryPage  from './pages/HistoryPage'
+import { loadProxy } from './utils/proxy'
 
 const { Header, Footer } = Layout
 const { Title } = Typography
 
 function Shell({ isDark, onToggleDark }) {
   const { token } = antTheme.useToken()
+  const [proxyOpen,   setProxyOpen]   = useState(false)
+  const [proxyActive, setProxyActive] = useState(() => {
+    const c = loadProxy()
+    return !!(c?.enabled && c.host && c.port)
+  })
 
   return (
     <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -20,7 +27,24 @@ function Shell({ isDark, onToggleDark }) {
         <Title level={4} style={{ margin: 0, flex: 1, color: token.colorText }}>
           Web Security GUI
         </Title>
-        <Switch checked={isDark} onChange={onToggleDark} checkedChildren={<MoonOutlined />} unCheckedChildren={<SunOutlined />} />
+
+        <Tooltip title={proxyActive ? 'Proxy active' : 'No proxy configured'}>
+          <Badge dot status={proxyActive ? 'success' : 'default'} offset={[-2, 2]}>
+            <Button
+              icon={<GlobalOutlined />}
+              onClick={() => setProxyOpen(true)}
+              type={proxyActive ? 'primary' : 'default'}
+              size="small"
+            />
+          </Badge>
+        </Tooltip>
+
+        <Switch
+          checked={isDark}
+          onChange={onToggleDark}
+          checkedChildren={<MoonOutlined />}
+          unCheckedChildren={<SunOutlined />}
+        />
       </Header>
 
       <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'row' }}>
@@ -44,6 +68,12 @@ function Shell({ isDark, onToggleDark }) {
           <span>AGPL-3.0</span>
         </Space>
       </Footer>
+
+      <ProxyModal
+        open={proxyOpen}
+        onClose={() => setProxyOpen(false)}
+        onSave={setProxyActive}
+      />
     </Layout>
   )
 }

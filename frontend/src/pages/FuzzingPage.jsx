@@ -5,6 +5,7 @@ import FuzzingResults from '../components/fuzzing/FuzzingResults'
 import ScanProgress   from '../components/ScanProgress'
 import ScanHistory    from '../components/ScanHistory'
 import { createJob, openJobSocket } from '../api'
+import { getProxyUrl } from '../utils/proxy'
 
 const { Sider, Content } = Layout
 const { Text } = Typography
@@ -24,7 +25,8 @@ export default function FuzzingPage() {
     setScanning(true); setStopping(false)
     setLines([]); setLive([]); setResult(null); setError(null)
     try {
-      const job = await createJob(engine, target, options)
+      const proxyUrl = getProxyUrl()
+      const job = await createJob(engine, target, { ...options, ...(proxyUrl ? { proxy_url: proxyUrl } : {}) })
       const ws  = openJobSocket(job.id, (msg) => {
         if (msg.type === 'progress') {
           setLines(p => [...p, msg])

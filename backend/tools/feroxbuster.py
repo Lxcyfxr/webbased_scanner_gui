@@ -41,6 +41,10 @@ class FeroxbusterTool(BaseTool):
         if not options.get("recursion", True):
             cmd.append("--no-recursion")
 
+        proxy = options.get("proxy_url")
+        if proxy and re.match(r'^https?://', proxy):
+            cmd.extend(["--proxy", proxy])
+
         return cmd
 
     def parse_stdout_line(self, line: str) -> dict | None:

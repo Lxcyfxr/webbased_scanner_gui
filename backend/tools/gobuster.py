@@ -40,6 +40,10 @@ class GobusterTool(BaseTool):
         if options.get("follow_redirects"):
             cmd.append("-r")
 
+        proxy = options.get("proxy_url")
+        if proxy and re.match(r'^https?://', proxy):
+            cmd.extend(["--proxy", proxy])
+
         return cmd
 
     def parse_stdout_line(self, line: str) -> dict | None:
