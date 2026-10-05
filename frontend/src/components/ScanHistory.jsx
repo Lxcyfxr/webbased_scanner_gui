@@ -90,7 +90,7 @@ export default function ScanHistory({ onSelect }) {
           style={{ marginTop: 8 }}
           onClick={() => navigate('/history')}
         >
-          {hasMore ? `More (${scans.length - 3} hidden)` : 'View all scans'}
+          {hasMore ? 'More' : 'View all scans'}
         </Button>
       )}
     </div>

@@ -1,10 +1,10 @@
 import {
   Form, Input, InputNumber, Select, Switch, Button, Divider, Typography,
-  AutoComplete, Space, Modal, Row, Col, Badge, Tabs, Checkbox, Tag, Alert,
+  AutoComplete, Space, Modal, Row, Col, Badge, Tabs, Checkbox, Tag, Alert, Tooltip,
 } from 'antd'
 import {
   PlayCircleOutlined, StopOutlined, SettingOutlined,
-  CheckOutlined, ThunderboltOutlined,
+  CheckOutlined, ThunderboltOutlined, InfoCircleOutlined,
 } from '@ant-design/icons'
 import { useState } from 'react'
 
@@ -32,32 +32,52 @@ function countAdvanced(vals) {
   return n
 }
 
-// Checkbox helper — label and flag inline, no separate Switch
-function Cb({ name, label, flag }) {
+// Inline info icon with tooltip
+function Info({ tip }) {
+  return (
+    <Tooltip title={tip} placement="right" overlayStyle={{ maxWidth: 280 }}>
+      <InfoCircleOutlined style={{ marginLeft: 5, fontSize: 11, color: '#8c8c8c', cursor: 'help' }} />
+    </Tooltip>
+  )
+}
+
+// Form.Item label with inline info icon
+function InfoLabel({ label, tip }) {
+  return (
+    <span>
+      {label}
+      <Info tip={tip} />
+    </span>
+  )
+}
+
+// Checkbox row with info icon
+function Cb({ name, label, flag, tip }) {
   return (
     <Form.Item name={name} valuePropName="checked" style={{ marginBottom: 8 }}>
       <Checkbox>
         <Text style={{ fontSize: 13 }}>{label}</Text>
         {flag && <Text type="secondary" style={{ fontSize: 11, marginLeft: 5 }}>{flag}</Text>}
+        {tip && <Info tip={tip} />}
       </Checkbox>
     </Form.Item>
   )
 }
 
 const NSE_CATEGORIES = [
-  { value: 'safe',      label: 'Safe',       desc: 'Only safe, non-intrusive scripts',   risk: 'low'    },
-  { value: 'default',   label: 'Default',    desc: 'Standard -sC equivalent',            risk: 'low'    },
-  { value: 'discovery', label: 'Discovery',  desc: 'Enhanced host & service discovery',  risk: 'low'    },
-  { value: 'version',   label: 'Version',    desc: 'Version detection enhancement',      risk: 'low'    },
-  { value: 'auth',      label: 'Auth',       desc: 'Authentication bypass checks',       risk: 'medium' },
-  { value: 'vuln',      label: 'Vuln',       desc: 'CVE & vulnerability detection',      risk: 'medium' },
-  { value: 'http',      label: 'HTTP',       desc: 'Web server enumeration (http-*)',    risk: 'medium' },
-  { value: 'smb',       label: 'SMB',        desc: 'Windows / Samba enumeration',        risk: 'medium' },
-  { value: 'ssh',       label: 'SSH',        desc: 'SSH server checks',                  risk: 'medium' },
-  { value: 'dns',       label: 'DNS',        desc: 'DNS enumeration',                    risk: 'medium' },
-  { value: 'ftp',       label: 'FTP',        desc: 'FTP server checks',                  risk: 'medium' },
-  { value: 'brute',     label: 'Brute',      desc: 'Password brute-force',               risk: 'high'   },
-  { value: 'exploit',   label: 'Exploit',    desc: 'Active exploitation scripts',        risk: 'high'   },
+  { value: 'safe',      label: 'Safe',      desc: 'Only safe, non-intrusive scripts',   risk: 'low',    tip: 'Scripts that are considered safe to run on any target without risk of crashing services or triggering alerts.' },
+  { value: 'default',   label: 'Default',   desc: 'Standard -sC equivalent',            risk: 'low',    tip: 'The default set of scripts run with -sC. Covers common useful checks like HTTP titles, SSL certificates and SSH host keys.' },
+  { value: 'discovery', label: 'Discovery', desc: 'Enhanced host & service discovery',  risk: 'low',    tip: 'Scripts that actively discover more about targets — additional services, network topology and host info.' },
+  { value: 'version',   label: 'Version',   desc: 'Version detection enhancement',      risk: 'low',    tip: 'Scripts that supplement version detection (-sV) with more detailed service fingerprinting.' },
+  { value: 'auth',      label: 'Auth',      desc: 'Authentication bypass checks',       risk: 'medium', tip: 'Checks for authentication weaknesses such as anonymous login, default credentials or missing auth on services.' },
+  { value: 'vuln',      label: 'Vuln',      desc: 'CVE & vulnerability detection',      risk: 'medium', tip: 'Checks for known CVEs and common vulnerabilities. Does not exploit — only detects.' },
+  { value: 'http',      label: 'HTTP',      desc: 'Web server enumeration (http-*)',    risk: 'medium', tip: 'Enumerates web servers — titles, headers, open directories, common paths, and web application info.' },
+  { value: 'smb',       label: 'SMB',       desc: 'Windows / Samba enumeration',        risk: 'medium', tip: 'Enumerates Windows shares, users, OS version and checks for common SMB vulnerabilities.' },
+  { value: 'ssh',       label: 'SSH',       desc: 'SSH server checks',                  risk: 'medium', tip: 'Checks SSH host keys, supported auth methods and known weak algorithms.' },
+  { value: 'dns',       label: 'DNS',       desc: 'DNS enumeration',                    risk: 'medium', tip: 'Attempts zone transfers, enumerates subdomains and checks for DNS misconfigurations.' },
+  { value: 'ftp',       label: 'FTP',       desc: 'FTP server checks',                  risk: 'medium', tip: 'Checks for anonymous FTP login, lists accessible directories and checks for known FTP vulnerabilities.' },
+  { value: 'brute',     label: 'Brute',     desc: 'Password brute-force',               risk: 'high',   tip: 'Attempts to brute-force credentials on discovered services. Intrusive — will generate many failed login attempts.' },
+  { value: 'exploit',   label: 'Exploit',   desc: 'Active exploitation scripts',        risk: 'high',   tip: 'Actively attempts to exploit vulnerabilities. Can crash services or cause damage. Only use on systems you own.' },
 ]
 
 const RISK_COLOR = { low: 'green', medium: 'orange', high: 'red' }
@@ -73,46 +93,46 @@ function SettingsTab() {
   return (
     <>
       <Divider orientation="left" orientationMargin={0} style={{ marginTop: 4 }}>Host Discovery</Divider>
-      <Row gutter={[0, 0]}>
-        <Col span={8}><Cb name="no_ping"    label="Skip host discovery" flag="-Pn" /></Col>
-        <Col span={8}><Cb name="no_dns"     label="Disable DNS"         flag="-n"  /></Col>
-        <Col span={8}><Cb name="force_dns"  label="Force DNS"           flag="-R"  /></Col>
+      <Row>
+        <Col span={8}><Cb name="no_ping"   label="Skip host discovery" flag="-Pn" tip="Treat all hosts as online and skip ping checks. Useful when targets block ICMP or ping is filtered by a firewall." /></Col>
+        <Col span={8}><Cb name="no_dns"    label="Disable DNS"         flag="-n"  tip="Never do reverse DNS resolution on discovered IP addresses. Speeds up the scan and avoids DNS leaks." /></Col>
+        <Col span={8}><Cb name="force_dns" label="Force DNS"           flag="-R"  tip="Always perform reverse DNS resolution, even for hosts that appear to be offline." /></Col>
       </Row>
 
       <Divider orientation="left" orientationMargin={0}>Scan Behaviour</Divider>
       <Row>
-        <Col span={8}><Cb name="open_only"  label="Open ports only"  flag="--open"       /></Col>
-        <Col span={8}><Cb name="fast_mode"  label="Fast mode"        flag="-F"           /></Col>
-        <Col span={8}><Cb name="aggressive" label="Aggressive"       flag="-A"           /></Col>
-        <Col span={8}><Cb name="traceroute" label="Traceroute"       flag="--traceroute" /></Col>
-        <Col span={8}><Cb name="reason"     label="Show reason"      flag="--reason"     /></Col>
-        <Col span={8}><Cb name="ipv6"       label="IPv6 scanning"    flag="-6"           /></Col>
+        <Col span={8}><Cb name="open_only"  label="Open ports only"  flag="--open"       tip="Only show ports that are in the open state. Closed and filtered ports are hidden from the results." /></Col>
+        <Col span={8}><Cb name="fast_mode"  label="Fast mode"        flag="-F"           tip="Scan only the 100 most common ports instead of the default 1000. Significantly faster but may miss uncommon services." /></Col>
+        <Col span={8}><Cb name="aggressive" label="Aggressive"       flag="-A"           tip="Enables OS detection (-O), version detection (-sV), script scanning (-sC) and traceroute in one flag. Noisy but thorough." /></Col>
+        <Col span={8}><Cb name="traceroute" label="Traceroute"       flag="--traceroute" tip="Trace the network hop path to each host after the scan. Shows routers between you and the target." /></Col>
+        <Col span={8}><Cb name="reason"     label="Show reason"      flag="--reason"     tip="Display the reason each port is in its particular state (e.g. 'syn-ack' for open, 'reset' for closed)." /></Col>
+        <Col span={8}><Cb name="ipv6"       label="IPv6 scanning"    flag="-6"           tip="Enable IPv6 support. The target must be specified as an IPv6 address." /></Col>
       </Row>
 
       <Divider orientation="left" orientationMargin={0}>Performance</Divider>
       <Row gutter={12}>
         <Col span={8}>
-          <Form.Item name="top_ports" label="Top ports">
+          <Form.Item name="top_ports" label={<InfoLabel label="Top ports" tip="Scan the N most commonly open ports rather than a fixed list. --top-ports 100 is equivalent to fast mode." />}>
             <InputNumber min={1} max={65535} placeholder="100" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="min_rate" label="Min rate (pkt/s)">
+          <Form.Item name="min_rate" label={<InfoLabel label="Min rate (pkt/s)" tip="Send packets no slower than this rate per second. Overrides timing template for throughput. Use with care on slow networks." />}>
             <InputNumber min={1} placeholder="100" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="max_rate" label="Max rate (pkt/s)">
+          <Form.Item name="max_rate" label={<InfoLabel label="Max rate (pkt/s)" tip="Send packets no faster than this rate per second. Useful for rate-limiting to avoid overwhelming the target or triggering IDS." />}>
             <InputNumber min={1} placeholder="1000" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="max_retries" label="Max retries">
+          <Form.Item name="max_retries" label={<InfoLabel label="Max retries" tip="Maximum number of retransmissions for each port probe. Lower values speed up the scan but may miss ports on lossy networks." />}>
             <InputNumber min={0} max={10} placeholder="3" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="scan_delay" label="Scan delay">
+          <Form.Item name="scan_delay" label={<InfoLabel label="Scan delay" tip="Enforce a minimum delay between probes sent to a host. Useful to avoid rate-limiting or IDS detection. e.g. 100ms or 1s." />}>
             <Input placeholder="100ms or 1s" />
           </Form.Item>
         </Col>
@@ -120,21 +140,21 @@ function SettingsTab() {
 
       <Divider orientation="left" orientationMargin={0}>Firewall / Evasion</Divider>
       <Row>
-        <Col span={8}><Cb name="badsum" label="Bad checksum" flag="--badsum" /></Col>
+        <Col span={8}><Cb name="badsum" label="Bad checksum" flag="--badsum" tip="Send packets with an intentionally incorrect TCP/UDP checksum. Some firewalls or IDS will respond, revealing their presence." /></Col>
       </Row>
       <Row gutter={12}>
         <Col span={8}>
-          <Form.Item name="source_port" label="Source port">
+          <Form.Item name="source_port" label={<InfoLabel label="Source port" tip="Use this fixed port number as the source for all scan packets. Some firewalls allow traffic from common ports like 53 (DNS) or 80 (HTTP)." />}>
             <InputNumber min={1} max={65535} placeholder="53" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="data_length" label="Data length">
+          <Form.Item name="data_length" label={<InfoLabel label="Data length" tip="Append random padding bytes to packets to reach this total length. Helps evade IDS signatures that match on packet size." />}>
             <InputNumber min={1} placeholder="25" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="ttl" label="TTL value">
+          <Form.Item name="ttl" label={<InfoLabel label="TTL value" tip="Set the IP Time-To-Live field. Can be used to limit how far packets travel or to mimic specific OS behaviour." />}>
             <InputNumber min={1} max={255} placeholder="64" style={{ width: '100%' }} />
           </Form.Item>
         </Col>
@@ -178,6 +198,7 @@ function NseTab({ advForm }) {
                       >
                         {cat.risk}
                       </Tag>
+                      <Info tip={cat.tip} />
                     </Space>
                     <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 1 }}>{cat.desc}</div>
                   </div>
@@ -208,12 +229,12 @@ function NseTab({ advForm }) {
       <Divider orientation="left" orientationMargin={0}>Custom Override</Divider>
       <Row gutter={12}>
         <Col span={12}>
-          <Form.Item name="script" label="Manual --script">
+          <Form.Item name="script" label={<InfoLabel label="Manual --script" tip="Comma-separated list of script names or categories to run. Overrides category selection above if both are set." />}>
             <Input placeholder="e.g. http-title,ssl-cert" allowClear />
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item name="script_args" label="--script-args">
+          <Form.Item name="script_args" label={<InfoLabel label="--script-args" tip="Arguments passed to NSE scripts as key=value pairs. e.g. user=admin,pass=secret or http.useragent=Mozilla." />}>
             <Input placeholder="e.g. user=admin,pass=1234" allowClear />
           </Form.Item>
         </Col>
@@ -274,7 +295,11 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
         <Text strong style={{ fontSize: 14 }}>New Scan</Text>
         <Divider style={{ margin: '8px 0 12px' }} />
 
-        <Form.Item name="target" label="Target" rules={[{ required: true, message: 'Enter a target' }]}>
+        <Form.Item
+          name="target"
+          label={<InfoLabel label="Target" tip="IP address (192.168.1.1), hostname (example.com), CIDR range (192.168.1.0/24) or IP range (192.168.1.1-50)." />}
+          rules={[{ required: true, message: 'Enter a target' }]}
+        >
           <AutoComplete
             options={suggestions}
             onSearch={handleSearch}
@@ -285,7 +310,7 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
           />
         </Form.Item>
 
-        <Form.Item name="scan_type" label="Scan Type">
+        <Form.Item name="scan_type" label={<InfoLabel label="Scan Type" tip="TCP Connect: full TCP handshake, reliable, no root needed. Ping Only: host discovery without port scan. UDP: scan UDP ports, slower, may need root." />}>
           <Select>
             <Select.Option value="tcp">TCP Connect</Select.Option>
             <Select.Option value="ping">Ping Only (-sn)</Select.Option>
@@ -293,11 +318,11 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
           </Select>
         </Form.Item>
 
-        <Form.Item name="ports" label="Ports (optional)">
+        <Form.Item name="ports" label={<InfoLabel label="Ports" tip="Specific ports to scan. Comma-separated (80,443) or ranges (1-1000) or both (22,80,8000-9000). Leave empty to scan the 1000 most common ports." />}>
           <Input placeholder="80,443  or  1-1000" allowClear />
         </Form.Item>
 
-        <Form.Item name="timing" label="Timing Template">
+        <Form.Item name="timing" label={<InfoLabel label="Timing Template" tip="Controls overall scan speed and aggressiveness. T0–T2 are slow and stealthy. T3 is default. T4–T5 are fast but noisy and may miss results on slow networks." />}>
           <Select>
             <Select.Option value={0}>T0 — Paranoid</Select.Option>
             <Select.Option value={1}>T1 — Sneaky</Select.Option>
@@ -308,15 +333,15 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
           </Select>
         </Form.Item>
 
-        <Form.Item name="service_version" label="Service Version (-sV)" valuePropName="checked">
+        <Form.Item name="service_version" label={<InfoLabel label="Service Version (-sV)" tip="Probe open ports to determine what service and version is running. e.g. identifies 'Apache httpd 2.4.51'. Adds time to the scan." />} valuePropName="checked">
           <Switch />
         </Form.Item>
 
-        <Form.Item name="os_detection" label="OS Detection (-O)" valuePropName="checked">
+        <Form.Item name="os_detection" label={<InfoLabel label="OS Detection (-O)" tip="Attempt to identify the remote operating system via TCP/IP fingerprinting. Results include confidence percentage. Usually requires root privileges." />} valuePropName="checked">
           <Switch />
         </Form.Item>
 
-        <Form.Item name="default_scripts" label="Default Scripts (-sC)" valuePropName="checked">
+        <Form.Item name="default_scripts" label={<InfoLabel label="Default Scripts (-sC)" tip="Run nmap's default NSE scripts against discovered services. Includes useful checks like HTTP page titles, SSL certificate details and SSH host keys." />} valuePropName="checked">
           <Switch />
         </Form.Item>
 
