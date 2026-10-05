@@ -13,6 +13,7 @@ from .database import engine, get_db, Base, run_migrations
 from .models import Job
 from .schemas import JobCreate, JobResponse
 from .runner import run_job
+from .msf.routes import router as msf_router
 from .tools.nmap import NmapTool
 from .tools.ffuf import FfufTool
 from .tools.feroxbuster import FeroxbusterTool
@@ -48,6 +49,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(msf_router)
 
 _active: dict[str, asyncio.Queue] = {}
 

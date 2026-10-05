@@ -10,6 +10,7 @@ export default defineConfig({
       '/jobs':      'http://localhost:8000',
       '/tools':     'http://localhost:8000',
       '/wordlists': 'http://localhost:8000',
+      '/msf':       'http://localhost:8000',
       '/ws': {
         target:    'ws://localhost:8000',
         ws:        true,

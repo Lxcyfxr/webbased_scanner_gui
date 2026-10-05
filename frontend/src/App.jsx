@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, Layout, Typography, Switch, Space, Button, Badge, Tooltip, theme as antTheme } from 'antd'
 import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import ActivityBar  from './components/ActivityBar'
-import ProxyModal   from './components/ProxyModal'
-import NmapPage     from './pages/NmapPage'
-import FuzzingPage  from './pages/FuzzingPage'
-import HistoryPage  from './pages/HistoryPage'
+import ActivityBar    from './components/ActivityBar'
+import ProxyModal     from './components/ProxyModal'
+import NmapPage       from './pages/NmapPage'
+import FuzzingPage    from './pages/FuzzingPage'
+import MsfPage        from './pages/MsfPage'
+import HistoryPage    from './pages/HistoryPage'
 import { loadProxy } from './utils/proxy'
 
 const { Header, Footer } = Layout
@@ -55,8 +56,9 @@ function Shell({ isDark, onToggleDark }) {
         <Routes>
           <Route path="/"               element={<Navigate to="/tool/nmap" replace />} />
           <Route path="/tool/nmap"      element={<NmapPage />} />
-          <Route path="/tool/fuzzing"   element={<FuzzingPage />} />
-          <Route path="/history"        element={<HistoryPage />} />
+          <Route path="/tool/fuzzing"     element={<FuzzingPage />} />
+          <Route path="/tool/metasploit" element={<MsfPage />} />
+          <Route path="/history"         element={<HistoryPage />} />
         </Routes>
       </Layout>
 
