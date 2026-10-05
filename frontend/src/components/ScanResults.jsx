@@ -45,7 +45,7 @@ function doExportCSV(result) {
 }
 
 async function doExportXML(result) {
-  const res = await fetch(`http://localhost:8000/scans/${result.scanId}/xml`)
+  const res = await fetch(`/jobs/${result.scanId}/xml`)
   if (!res.ok) return
   const xml = await res.text()
   triggerDownload(`scan_${safeName(result.target)}.xml`, xml, 'application/xml')

@@ -1,0 +1,26 @@
+[Unit]
+Description=Web Security GUI — nmap & fuzzing web interface
+Documentation=https://github.com/Lxcyfxr/webbased_scanner_gui
+After=network.target
+
+[Service]
+Type=simple
+User=websecgui
+Group=websecgui
+WorkingDirectory=/usr/share/webbased-scanner-gui
+EnvironmentFile=/etc/webbased-scanner-gui/config.env
+ExecStart=/usr/share/webbased-scanner-gui/venv/bin/uvicorn \
+    backend.main:app \
+    --host 0.0.0.0 \
+    --port ${PORT}
+Restart=on-failure
+RestartSec=5
+# Harden the service
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/webbased-scanner-gui
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

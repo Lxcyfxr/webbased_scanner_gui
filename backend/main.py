@@ -1,9 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import asyncio
 import json
 import os
+from pathlib import Path
 from uuid import uuid4
 from datetime import datetime
 
@@ -39,9 +41,10 @@ WORDLIST_PRESETS = [
 
 app = FastAPI(title="Web Security GUI API", version="1.0.0")
 
+_cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -178,3 +181,9 @@ def delete_job(job_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Job not found")
     db.delete(job)
     db.commit()
+
+
+# Serve built frontend — must be last so API routes take precedence
+_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if _dist.exists():
+    app.mount("/", StaticFiles(directory=str(_dist), html=True), name="static")

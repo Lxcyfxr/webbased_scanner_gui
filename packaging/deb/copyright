@@ -1,0 +1,117 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: webbased-scanner-gui
+Upstream-Contact: https://github.com/Lxcyfxr/webbased_scanner_gui
+Source: https://github.com/Lxcyfxr/webbased_scanner_gui
+
+Files: *
+Copyright: 2026 Lxcyfxr
+License: AGPL-3.0+
+
+License: AGPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published
+ by the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ .
+ On Debian systems, the full text of the GNU Affero General Public
+ License version 3 can be found in /usr/share/common-licenses/AGPL-3.
+
+-------------------------------------------------------------------------------
+Third-party dependencies (Python — backend)
+-------------------------------------------------------------------------------
+
+Files: (FastAPI)
+Copyright: 2018 Sebastián Ramírez
+License: MIT
+
+Files: (SQLAlchemy)
+Copyright: 2005-2024 SQLAlchemy authors and contributors
+License: MIT
+
+Files: (Pydantic)
+Copyright: 2017 Samuel Colvin and contributors
+License: MIT
+
+Files: (uvicorn)
+Copyright: 2017 Tom Christie
+License: BSD-3-Clause
+
+Files: (Starlette)
+Copyright: 2018 Tom Christie
+License: BSD-3-Clause
+
+Files: (anyio)
+Copyright: 2018 Alex Grönholm
+License: MIT
+
+Files: (aiofiles)
+Copyright: 2016 Tin Tvrtković
+License: Apache-2.0
+
+-------------------------------------------------------------------------------
+Third-party dependencies (JavaScript — frontend, bundled)
+-------------------------------------------------------------------------------
+
+Files: (React)
+Copyright: Meta Platforms, Inc. and affiliates
+License: MIT
+
+Files: (Ant Design)
+Copyright: 2015 Ant Financial
+License: MIT
+
+Files: (react-router-dom)
+Copyright: Remix Software Inc.
+License: MIT
+
+Files: (lightningcss — build tool only, not shipped)
+Copyright: Devon Govett
+License: MPL-2.0
+
+-------------------------------------------------------------------------------
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
+License: BSD-3-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.
+
+License: Apache-2.0
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ use this file except in compliance with the License. You may obtain a copy of
+ the License at http://www.apache.org/licenses/LICENSE-2.0

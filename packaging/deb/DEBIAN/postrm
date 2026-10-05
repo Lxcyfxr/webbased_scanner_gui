@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+systemctl daemon-reload
+
+if [ "$1" = "purge" ]; then
+    # Remove data, config, sudoers and user only on purge
+    rm -rf /var/lib/webbased-scanner-gui
+    rm -f /etc/sudoers.d/webbased-scanner-gui
+    rm -rf /usr/share/webbased-scanner-gui/venv
+    userdel websecgui 2>/dev/null || true
+fi

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Lxcyfxr
+
+services:
+  app:
+    build: .
+    image: webbased-scanner-gui:latest
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    volumes:
+      - scanner-data:/data
+    environment:
+      DATABASE_URL: sqlite:////data/scans.db
+      PORT: "8080"
+      # Restrict CORS in production — comma-separated origins
+      # CORS_ORIGINS: "http://localhost:8080"
+    restart: unless-stopped
+    # nmap SYN scans need NET_RAW capability
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+volumes:
+  scanner-data:
+    driver: local

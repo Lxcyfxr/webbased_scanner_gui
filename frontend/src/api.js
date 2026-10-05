@@ -1,4 +1,11 @@
-const BASE = 'http://localhost:8000'
+// In dev, Vite proxies these to localhost:8000.
+// In production, FastAPI serves everything from the same origin.
+const BASE = ''
+
+const wsBase = () => {
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}`
+}
 
 export const createJob  = (tool, target, options) =>
   fetch(`${BASE}/jobs`, {
@@ -7,20 +14,20 @@ export const createJob  = (tool, target, options) =>
     body: JSON.stringify({ tool, target, options }),
   }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
 
-export const listJobs   = (tool) =>
+export const listJobs      = (tool) =>
   fetch(`${BASE}/jobs${tool ? `?tool=${tool}` : ''}`).then(r => r.json())
 
-export const getJob     = (id)   =>
+export const getJob        = (id)   =>
   fetch(`${BASE}/jobs/${id}`).then(r => r.json())
 
-export const deleteJob  = (id)   =>
+export const deleteJob     = (id)   =>
   fetch(`${BASE}/jobs/${id}`, { method: 'DELETE' })
 
-export const listWordlists = () =>
+export const listWordlists = ()     =>
   fetch(`${BASE}/wordlists`).then(r => r.json())
 
 export const openJobSocket = (id, onMessage, onClose) => {
-  const ws = new WebSocket(`ws://localhost:8000/ws/jobs/${id}`)
+  const ws = new WebSocket(`${wsBase()}/ws/jobs/${id}`)
   ws.onmessage = e => onMessage(JSON.parse(e.data))
   if (onClose) ws.onclose = onClose
   return ws

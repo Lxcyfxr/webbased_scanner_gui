@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+systemctl stop webbased-scanner-gui.service  || true
+systemctl disable webbased-scanner-gui.service || true

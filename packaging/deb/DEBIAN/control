@@ -1,0 +1,15 @@
+Package: webbased-scanner-gui
+Version: 1.0.0
+Section: net
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.11), python3-venv, python3-pip, nmap, sudo
+Recommends: ffuf, gobuster
+Maintainer: Lxcyfxr <https://github.com/Lxcyfxr>
+Homepage: https://github.com/Lxcyfxr/webbased_scanner_gui
+Description: Web-based GUI for network scanning and web fuzzing
+ A web-based graphical interface for nmap and common web fuzzing tools
+ (ffuf, feroxbuster, gobuster, wenum). Provides a browser-based UI for
+ running scans, viewing live results, and exporting findings.
+ .
+ Accessible at http://localhost:8080 after installation.

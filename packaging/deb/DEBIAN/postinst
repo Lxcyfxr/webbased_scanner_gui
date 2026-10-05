@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+APP_DIR=/usr/share/webbased-scanner-gui
+DATA_DIR=/var/lib/webbased-scanner-gui
+APP_USER=websecgui
+
+# Create dedicated system user
+if ! id -u "$APP_USER" >/dev/null 2>&1; then
+    useradd --system --no-create-home --shell /usr/sbin/nologin "$APP_USER"
+fi
+
+# Data directory for SQLite database
+mkdir -p "$DATA_DIR"
+chown "$APP_USER:$APP_USER" "$DATA_DIR"
+
+# Set up Python virtual environment and install dependencies
+if [ ! -d "$APP_DIR/venv" ]; then
+    python3 -m venv "$APP_DIR/venv"
+fi
+"$APP_DIR/venv/bin/pip" install --quiet --upgrade pip
+"$APP_DIR/venv/bin/pip" install --quiet -r "$APP_DIR/requirements.txt"
+
+# Allow the app user to run nmap as root for SYN/UDP scans
+SUDOERS_FILE=/etc/sudoers.d/webbased-scanner-gui
+echo "$APP_USER ALL=(root) NOPASSWD: /usr/bin/nmap" > "$SUDOERS_FILE"
+chmod 440 "$SUDOERS_FILE"
+
+# Enable and start systemd service
+systemctl daemon-reload
+systemctl enable webbased-scanner-gui.service
+systemctl start webbased-scanner-gui.service || true
+
+echo ""
+echo "webbased-scanner-gui installed successfully."
+echo "Open http://localhost:8080 in your browser."
+echo ""
