@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout, Table, Tag, Button, Drawer, Typography, Space, theme as antTheme, Popconfirm } from 'antd'
-import { ArrowLeftOutlined, DeleteOutlined, RadarChartOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DeleteOutlined, RadarChartOutlined, GithubOutlined } from '@ant-design/icons'
 import ScanResults from '../components/ScanResults'
 import { listScans, deleteScan } from '../api'
 
-const { Content, Header } = Layout
+const { Content, Header, Footer } = Layout
 const { Title, Text } = Typography
 
 const STATUS_COLOR = { done: 'green', running: 'blue', failed: 'red', pending: 'orange', cancelled: 'warning' }
@@ -163,6 +163,31 @@ export default function HistoryPage() {
           locale={{ emptyText: 'No scans yet' }}
         />
       </Content>
+
+      <Footer
+        style={{
+          textAlign: 'center',
+          padding: '10px 24px',
+          background: token.colorBgContainer,
+          borderTop: `1px solid ${token.colorBorderSecondary}`,
+          fontSize: 12,
+          color: token.colorTextSecondary,
+        }}
+      >
+        <Space split={<span style={{ color: token.colorBorderSecondary }}>·</span>}>
+          <span>v1.0.0</span>
+          <a
+            href="https://github.com/Lxcyfxr/webbased_scanner_gui"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: token.colorTextSecondary }}
+          >
+            <GithubOutlined style={{ marginRight: 5 }} />
+            Lxcyfxr/webbased_scanner_gui
+          </a>
+          <span>AGPL-3.0</span>
+        </Space>
+      </Footer>
 
       <Drawer
         title={selected ? `Full Report — ${selected.target}` : ''}

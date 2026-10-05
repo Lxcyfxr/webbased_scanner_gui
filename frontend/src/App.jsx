@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ConfigProvider, Layout, Typography, Space, Switch, theme as antTheme } from 'antd'
-import { RadarChartOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined } from '@ant-design/icons'
 import ScanForm from './components/ScanForm'
 import ScanHistory from './components/ScanHistory'
 import ScanProgress from './components/ScanProgress'
@@ -9,7 +9,7 @@ import ScanResults from './components/ScanResults'
 import HistoryPage from './pages/HistoryPage'
 import { createScan, openScanSocket } from './api'
 
-const { Header, Sider, Content } = Layout
+const { Header, Sider, Content, Footer } = Layout
 const { Title } = Typography
 
 function AppLayout({ isDark, onToggleDark }) {
@@ -127,6 +127,31 @@ function AppLayout({ isDark, onToggleDark }) {
           )}
         </Content>
       </Layout>
+
+      <Footer
+        style={{
+          textAlign: 'center',
+          padding: '10px 24px',
+          background: token.colorBgContainer,
+          borderTop: `1px solid ${token.colorBorderSecondary}`,
+          fontSize: 12,
+          color: token.colorTextSecondary,
+        }}
+      >
+        <Space split={<span style={{ color: token.colorBorderSecondary }}>·</span>}>
+          <span>v1.0.0</span>
+          <a
+            href="https://github.com/Lxcyfxr/webbased_scanner_gui"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: token.colorTextSecondary }}
+          >
+            <GithubOutlined style={{ marginRight: 5 }} />
+            Lxcyfxr/webbased_scanner_gui
+          </a>
+          <span>AGPL-3.0</span>
+        </Space>
+      </Footer>
     </Layout>
   )
 }
