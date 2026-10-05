@@ -50,4 +50,10 @@ ISC, MPL-2.0). Full license texts are available in their respective packages.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+AGPL-3.0 — see [LICENSE](LICENSE).
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. If you run a modified version over a network, you must make the
+source available to users of that service.
