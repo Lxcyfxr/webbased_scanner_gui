@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, Layout, Typography, Switch, Space, Button, Badge, Tooltip, theme as antTheme } from 'antd'
-import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, GlobalOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import ActivityBar  from './components/ActivityBar'
 import ProxyModal   from './components/ProxyModal'
 import NmapPage     from './pages/NmapPage'
@@ -28,14 +28,16 @@ function Shell({ isDark, onToggleDark }) {
           Web Security GUI
         </Title>
 
-        <Tooltip title={proxyActive ? 'Proxy active' : 'No proxy configured'}>
+        <Tooltip title={proxyActive ? 'VPN/Proxy active' : 'No proxy configured'}>
           <Badge dot status={proxyActive ? 'success' : 'default'} offset={[-2, 2]}>
             <Button
-              icon={<GlobalOutlined />}
+              icon={<SafetyCertificateOutlined />}
               onClick={() => setProxyOpen(true)}
               type={proxyActive ? 'primary' : 'default'}
               size="small"
-            />
+            >
+              VPN
+            </Button>
           </Badge>
         </Tooltip>
 

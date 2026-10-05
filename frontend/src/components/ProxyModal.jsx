@@ -1,9 +1,9 @@
 import { Modal, Form, Input, InputNumber, Select, Switch, Typography, Divider, Alert } from 'antd'
-import { GlobalOutlined } from '@ant-design/icons'
+import { SafetyCertificateOutlined, WarningOutlined } from '@ant-design/icons'
 import { useEffect } from 'react'
-import { loadProxy, saveProxy, getProxyUrl } from '../utils/proxy'
+import { loadProxy, saveProxy } from '../utils/proxy'
 
-const { Text } = Typography
+const { Text, Paragraph } = Typography
 
 const PROXY_TYPES = [
   { label: 'HTTP',   value: 'http'   },
@@ -37,13 +37,13 @@ export default function ProxyModal({ open, onClose, onSave }) {
 
   return (
     <Modal
-      title={<><GlobalOutlined style={{ marginRight: 8 }} />Proxy Configuration</>}
+      title={<><SafetyCertificateOutlined style={{ marginRight: 8 }} />VPN / Proxy</>}
       open={open}
       onCancel={onClose}
       onOk={handleSave}
       okText="Save"
       width={480}
-      style={{ top: '15vh' }}
+      style={{ top: '12vh' }}
     >
       <Form form={form} layout="vertical" size="small" style={{ marginTop: 8 }}>
 
@@ -93,6 +93,16 @@ export default function ProxyModal({ open, onClose, onSave }) {
         {values.enabled && (!values.host || !values.port) && (
           <Alert type="warning" showIcon message="Enter host and port to enable the proxy." style={{ marginTop: 8 }} />
         )}
+
+        <Divider orientation="left" orientationMargin={0} style={{ marginTop: 16, fontSize: 12 }}>
+          <WarningOutlined style={{ marginRight: 4 }} />Legal Disclaimer
+        </Divider>
+
+        <Paragraph style={{ fontSize: 11, color: 'inherit', marginBottom: 0 }} type="secondary">
+          This tool is intended for use on networks and systems you <Text strong style={{ fontSize: 11 }}>own
+          or have explicit written permission</Text> to test. Unauthorized scanning or fuzzing may be
+          illegal in your jurisdiction. The authors accept no liability for misuse.
+        </Paragraph>
 
       </Form>
     </Modal>
