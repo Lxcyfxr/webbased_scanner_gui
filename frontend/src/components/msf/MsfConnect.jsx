@@ -56,11 +56,20 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
           </Form.Item>
 
           <Form.Item name="port" label="Port">
-            <InputNumber min={1} max={65535} style={{ width: '100%' }} />
+            <InputNumber min={1} max={65535} placeholder="55553" style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Enter msfrpcd password' }]}>
-            <Input.Password placeholder="msfrpcd password" autoComplete="new-password" />
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: 'Enter msfrpcd password' }]}
+            extra={
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                The password you chose when starting msfrpcd — not a system password.
+              </Text>
+            }
+          >
+            <Input.Password placeholder="password you set with -P" autoComplete="new-password" />
           </Form.Item>
 
           <Form.Item name="ssl" label="SSL" valuePropName="checked">
@@ -71,7 +80,12 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
             type="info"
             showIcon
             style={{ marginBottom: 10, fontSize: 11 }}
-            message={<span>Start msfrpcd first:<br /><Text code style={{ fontSize: 10 }}>sudo msfrpcd -P yourpassword -S -f</Text></span>}
+            message={
+              <span>
+                Start msfrpcd first, pick any password:<br />
+                <Text code style={{ fontSize: 10 }}>sudo msfrpcd -P mypassword -S -f</Text>
+              </span>
+            }
           />
 
           <Button
