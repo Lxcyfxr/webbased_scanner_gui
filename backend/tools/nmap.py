@@ -1,4 +1,5 @@
 import re
+import shlex
 import xml.etree.ElementTree as ET
 from .base import BaseTool
 
@@ -72,6 +73,15 @@ class NmapTool(BaseTool):
         return any(re.match(p, target) for p in patterns)
 
     def build_command(self, target: str, options: dict) -> list[str]:
+        raw = options.get("raw_command")
+        if raw:
+            parts = shlex.split(str(raw).strip())
+            if not parts or parts[0] != "nmap":
+                raise ValueError("raw_command must start with 'nmap'")
+            if "-oX" not in parts:
+                parts = parts[:-1] + ["-oX", "-", "--stats-every", "2s", "-v", parts[-1]]
+            return parts
+
         cmd = ["nmap", "-oX", "-", "--stats-every", "2s", "-v"]
         if options.get("ping_scan"):
             cmd.append("-sn")

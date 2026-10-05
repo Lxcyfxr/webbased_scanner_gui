@@ -1,10 +1,11 @@
 import { Tooltip, theme as antTheme } from 'antd'
-import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const ITEMS = [
   { path: '/tool/nmap',       icon: <RadarChartOutlined />, label: 'Network (nmap)' },
   { path: '/tool/fuzzing',    icon: <BugOutlined />,        label: 'Web Fuzzing'    },
+  { path: '/tool/nikto',      icon: <SafetyOutlined />,     label: 'Nikto'          },
   { path: '/tool/metasploit', icon: <AimOutlined />,        label: 'Metasploit'     },
   { path: '/history',         icon: <HistoryOutlined />,    label: 'History'        },
 ]

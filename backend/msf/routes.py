@@ -70,7 +70,7 @@ async def connect(body: ConnectRequest):
         client = await _run(lambda: MsfRpcClient(
             body.password, server=body.host, port=body.port, ssl=body.ssl
         ))
-        version = await _run(lambda: client.core.version())
+        version = await _run(lambda: client.core.version)
         _client = client
         return {"connected": True, "version": version}
     except Exception as e:
@@ -91,7 +91,7 @@ async def status():
     if _client is None:
         return {"connected": False, "available": True}
     try:
-        version = await _run(lambda: _client.core.version())
+        version = await _run(lambda: _client.core.version)
         return {"connected": True, "available": True, "version": version}
     except Exception:
         return {"connected": False, "available": True}
@@ -167,6 +167,52 @@ async def stop_daemon():
         _daemon_proc.kill()
     _daemon_proc = None
     return {"stopped": True}
+
+
+# ── process list ──────────────────────────────────────────────────────────────
+
+@router.get("/procs")
+async def list_msfrpcd_procs():
+    procs = []
+    try:
+        result = subprocess.run(["pgrep", "-af", "msfrpcd"], capture_output=True, text=True)
+        for line in result.stdout.strip().splitlines():
+            parts = line.split(None, 1)
+            if not parts:
+                continue
+            try:
+                pid = int(parts[0])
+            except ValueError:
+                continue
+            cmdline = parts[1] if len(parts) > 1 else ""
+            port = None
+            m = re.search(r"-p\s+(\d+)", cmdline)
+            if m:
+                port = int(m.group(1))
+            procs.append({"pid": pid, "cmdline": cmdline, "port": port})
+    except Exception:
+        pass
+    return procs
+
+
+@router.delete("/procs/{pid}")
+async def kill_msfrpcd_proc(pid: int):
+    import signal
+    try:
+        os.kill(pid, signal.SIGTERM)
+        await asyncio.sleep(0.5)
+        try:
+            os.kill(pid, 0)
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        return {"stopped": True, "pid": pid}
+    except ProcessLookupError:
+        raise HTTPException(404, f"Process {pid} not found")
+    except PermissionError:
+        raise HTTPException(403, f"No permission to kill PID {pid}")
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 
 # ── modules ────────────────────────────────────────────────────────────────────

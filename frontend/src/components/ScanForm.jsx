@@ -243,7 +243,7 @@ function NseTab({ advForm }) {
   )
 }
 
-export default function ScanForm({ onScan, onStop, scanning, stopping }) {
+export default function ScanForm({ onScan, onStop, scanning, stopping, onOptionsChange }) {
   const [form] = Form.useForm()
   const [advForm] = Form.useForm()
   const [suggestions, setSuggestions] = useState([])
@@ -255,17 +255,11 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
     setSuggestions((value ? all.filter(t => t.includes(value)) : all).map(t => ({ value: t })))
   }
 
-  const handleFinishAdv = () => {
-    setAdvCount(countAdvanced(advForm.getFieldsValue()))
-    setAdvOpen(false)
-  }
-
-  const handleSubmit = (values) => {
-    const { target, scan_type, service_version, os_detection, default_scripts, timing, ports } = values
-    const { script_categories = [], script: customScript, ...restAdv } = advForm.getFieldsValue()
+  const computeOptions = (mainVals, advVals) => {
+    const { scan_type, service_version, os_detection, default_scripts, timing, ports } = mainVals
+    const { script_categories = [], script: customScript, ...restAdv } = advVals
     const combinedScript = [...script_categories, ...(customScript ? [customScript] : [])].join(',') || null
-    saveTarget(target.trim())
-    onScan(target.trim(), {
+    return {
       ping_scan: scan_type === 'ping',
       udp_scan: scan_type === 'udp',
       service_version: !!service_version,
@@ -275,7 +269,26 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
       ports: ports || null,
       ...restAdv,
       script: combinedScript,
-    })
+    }
+  }
+
+  const notifyChange = () => {
+    if (!onOptionsChange) return
+    const mainVals = form.getFieldsValue()
+    onOptionsChange(mainVals.target?.trim() || '', computeOptions(mainVals, advForm.getFieldsValue()))
+  }
+
+  const handleFinishAdv = () => {
+    setAdvCount(countAdvanced(advForm.getFieldsValue()))
+    setAdvOpen(false)
+    notifyChange()
+  }
+
+  const handleSubmit = (values) => {
+    const { target } = values
+    const options = computeOptions(values, advForm.getFieldsValue())
+    saveTarget(target.trim())
+    onScan(target.trim(), options)
   }
 
   const tabs = [
@@ -289,6 +302,7 @@ export default function ScanForm({ onScan, onStop, scanning, stopping }) {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        onValuesChange={notifyChange}
         initialValues={{ scan_type: 'tcp', timing: 3 }}
         size="small"
       >

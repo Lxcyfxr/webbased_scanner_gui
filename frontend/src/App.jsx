@@ -7,6 +7,7 @@ import ProxyModal     from './components/ProxyModal'
 import NmapPage       from './pages/NmapPage'
 import FuzzingPage    from './pages/FuzzingPage'
 import MsfPage        from './pages/MsfPage'
+import NiktoPage      from './pages/NiktoPage'
 import HistoryPage    from './pages/HistoryPage'
 import { loadProxy } from './utils/proxy'
 
@@ -58,12 +59,13 @@ function Shell({ isDark, onToggleDark }) {
           <Route path="/tool/nmap"      element={<NmapPage />} />
           <Route path="/tool/fuzzing"     element={<FuzzingPage />} />
           <Route path="/tool/metasploit" element={<MsfPage />} />
+          <Route path="/tool/nikto"      element={<NiktoPage />} />
           <Route path="/history"         element={<HistoryPage />} />
         </Routes>
       </Layout>
 
       <Footer style={{ textAlign: 'center', padding: '10px 24px', flexShrink: 0, background: token.colorBgContainer, borderTop: `1px solid ${token.colorBorderSecondary}`, fontSize: 12, color: token.colorTextSecondary }}>
-        <Space split={<span style={{ color: token.colorBorderSecondary }}>·</span>}>
+        <Space separator={<span style={{ color: token.colorBorderSecondary }}>·</span>}>
           <span>v1.0.0</span>
           <a href="https://github.com/Lxcyfxr/webbased_scanner_gui" target="_blank" rel="noreferrer" style={{ color: token.colorTextSecondary }}>
             <GithubOutlined style={{ marginRight: 5 }} />

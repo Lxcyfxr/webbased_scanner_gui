@@ -1,27 +1,53 @@
-import { Form, Input, InputNumber, Switch, Button, Alert, Badge, Typography, Divider, Space } from 'antd'
-import { LinkOutlined, DisconnectOutlined, PlayCircleOutlined, StopOutlined } from '@ant-design/icons'
-import { useEffect, useState } from 'react'
+import { Form, Input, InputNumber, Switch, Button, Alert, Badge, Typography, Divider, Space, List, Tag, Popconfirm } from 'antd'
+import { LinkOutlined, DisconnectOutlined, PlayCircleOutlined, StopOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons'
+import { useEffect, useState, useCallback } from 'react'
 
 const { Text } = Typography
 
-export default function MsfConnect({ status, onConnect, onDisconnect, loading }) {
+export default function MsfConnect({ status, onConnect, onConnected, onDisconnect, loading }) {
   const [form] = Form.useForm()
   const [daemonStatus, setDaemonStatus] = useState({ running: false })
   const [starting, setStarting]         = useState(false)
   const [stopping, setStopping]         = useState(false)
   const [daemonError, setDaemonError]   = useState(null)
+  const [procs, setProcs]               = useState([])
+  const [procsLoading, setProcsLoading] = useState(false)
 
   const connected = status?.connected
 
-  useEffect(() => {
-    fetchDaemonStatus()
-  }, [])
-
-  const fetchDaemonStatus = async () => {
+  const fetchDaemonStatus = useCallback(async () => {
     try {
       const d = await fetch('/msf/daemon/status').then(r => r.json())
       setDaemonStatus(d)
     } catch {}
+  }, [])
+
+  const fetchProcs = useCallback(async () => {
+    setProcsLoading(true)
+    try {
+      const data = await fetch('/msf/procs').then(r => r.json())
+      setProcs(Array.isArray(data) ? data : [])
+    } catch {
+      setProcs([])
+    } finally {
+      setProcsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDaemonStatus()
+  }, [fetchDaemonStatus])
+
+  useEffect(() => {
+    if (!connected) fetchProcs()
+    else setProcs([])
+  }, [connected, fetchProcs])
+
+  const killProc = async (pid) => {
+    try {
+      await fetch(`/msf/procs/${pid}`, { method: 'DELETE' })
+    } catch {}
+    fetchProcs()
   }
 
   const handleStartDaemon = async () => {
@@ -38,7 +64,7 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail)
       setDaemonStatus({ running: true, pid: data.pid })
-      onConnect(data)   // already connected by the backend
+      onConnected(data)   // daemon start already returns a connected status
     } catch (e) {
       setDaemonError(e.message)
     } finally {
@@ -74,7 +100,7 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
         </Text>
       </Space>
 
-      {!status?.available && (
+      {status?.available === false && (
         <Alert
           type="warning"
           showIcon
@@ -141,7 +167,6 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
           )}
 
           <Space direction="vertical" style={{ width: '100%' }}>
-            {/* Primary action: start daemon + connect in one click */}
             <Button
               type="primary"
               icon={<PlayCircleOutlined />}
@@ -152,7 +177,6 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
               Start msfrpcd & Connect
             </Button>
 
-            {/* Secondary: connect to an already-running daemon */}
             <Button
               icon={<LinkOutlined />}
               loading={loading}
@@ -162,6 +186,51 @@ export default function MsfConnect({ status, onConnect, onDisconnect, loading })
               Connect to existing
             </Button>
           </Space>
+
+          {/* Running msfrpcd processes */}
+          <Divider style={{ margin: '14px 0 8px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>Running msfrpcd</Text>
+            <Button
+              size="small"
+              type="text"
+              icon={<ReloadOutlined />}
+              loading={procsLoading}
+              onClick={fetchProcs}
+              style={{ fontSize: 11 }}
+            />
+          </div>
+          {procs.length === 0 ? (
+            <Text type="secondary" style={{ fontSize: 11 }}>None found</Text>
+          ) : (
+            <List
+              size="small"
+              dataSource={procs}
+              renderItem={p => (
+                <List.Item
+                  style={{ padding: '4px 0' }}
+                  actions={[
+                    <Popconfirm
+                      title={`Kill PID ${p.pid}?`}
+                      onConfirm={() => killProc(p.pid)}
+                      okText="Kill"
+                      cancelText="No"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <DeleteOutlined style={{ color: '#ff4d4f', fontSize: 12, cursor: 'pointer' }} />
+                    </Popconfirm>
+                  ]}
+                >
+                  <div>
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <Tag color="orange" style={{ fontSize: 10, margin: 0 }}>PID {p.pid}</Tag>
+                      {p.port && <Tag style={{ fontSize: 10, margin: 0 }}>:{p.port}</Tag>}
+                    </div>
+                  </div>
+                </List.Item>
+              )}
+            />
+          )}
         </Form>
       )}
     </div>

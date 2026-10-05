@@ -9,7 +9,7 @@ const wsBase = () => {
   return `${proto}//${window.location.host}`
 }
 
-export default function MsfConsole({ connected }) {
+export default function MsfConsole({ connected, fillCommand, commandBatch }) {
   const [lines, setLines]       = useState([])
   const [input, setInput]       = useState('')
   const [wsStatus, setWsStatus] = useState('disconnected')
@@ -21,7 +21,7 @@ export default function MsfConsole({ connected }) {
   useEffect(() => {
     if (!connected) return
 
-    const socket = new WebSocket(`${wsBase()}/ws/msf/console`)
+    const socket = new WebSocket(`${wsBase()}/msf/console`)
     ws.current = socket
     setWsStatus('connecting')
 
@@ -42,6 +42,19 @@ export default function MsfConsole({ connected }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [lines])
+
+  useEffect(() => {
+    if (fillCommand?.cmd) setInput(fillCommand.cmd)
+  }, [fillCommand])
+
+  useEffect(() => {
+    if (!commandBatch?.cmds?.length || wsStatus !== 'connected') return
+    commandBatch.cmds.forEach((cmd, i) => {
+      setTimeout(() => {
+        ws.current?.send(JSON.stringify({ type: 'input', command: cmd }))
+      }, i * 150)
+    })
+  }, [commandBatch])
 
   const send = () => {
     const cmd = input.trim()

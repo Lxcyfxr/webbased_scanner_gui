@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Layout, Space, theme as antTheme, Divider } from 'antd'
 import MsfConnect  from '../components/msf/MsfConnect'
 import MsfModules  from '../components/msf/MsfModules'
+import MsfOptions  from '../components/msf/MsfOptions'
 import MsfSessions from '../components/msf/MsfSessions'
 import MsfConsole  from '../components/msf/MsfConsole'
 
@@ -9,8 +10,11 @@ const { Sider, Content } = Layout
 
 export default function MsfPage() {
   const { token }  = antTheme.useToken()
-  const [status, setStatus]   = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus]       = useState(null)
+  const [loading, setLoading]     = useState(false)
+  const [fillCommand, setFill]       = useState(null)
+  const [selectedModule, setSelected] = useState(null)
+  const [commandBatch, setBatch]      = useState(null)
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -47,11 +51,13 @@ export default function MsfPage() {
   }
 
   const handleModuleSelect = (mod) => {
-    // Load the module path into the console
-    const type = mod.type ?? 'exploit'
-    const name = (mod.fullname ?? mod.name ?? '').replace(`${type}/`, '')
-    // We can't directly inject into the console from here — user types it themselves.
-    // Future: could send a WS message to pre-fill.
+    const fullname = mod.fullname || mod.name || ''
+    setSelected(mod)
+    setFill({ cmd: `use ${fullname}`, id: Date.now() })
+  }
+
+  const handleSetOptions = (cmds) => {
+    setBatch({ cmds, id: Date.now() })
   }
 
   const connected = status?.connected ?? false
@@ -72,6 +78,7 @@ export default function MsfPage() {
           <MsfConnect
             status={status}
             onConnect={handleConnect}
+            onConnected={setStatus}
             onDisconnect={handleDisconnect}
             loading={loading}
           />
@@ -79,6 +86,9 @@ export default function MsfPage() {
           {connected && (
             <>
               <MsfModules onSelect={handleModuleSelect} />
+              {selectedModule && (
+                <MsfOptions module={selectedModule} onApply={handleSetOptions} />
+              )}
               <MsfSessions connected={connected} />
             </>
           )}
@@ -86,7 +96,7 @@ export default function MsfPage() {
       </Sider>
 
       <Content style={{ display: 'flex', flexDirection: 'column', background: '#0d1117', overflow: 'hidden' }}>
-        <MsfConsole connected={connected} />
+        <MsfConsole connected={connected} fillCommand={fillCommand} commandBatch={commandBatch} />
       </Content>
     </Layout>
   )

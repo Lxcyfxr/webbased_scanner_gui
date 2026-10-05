@@ -19,6 +19,7 @@ from .tools.ffuf import FfufTool
 from .tools.feroxbuster import FeroxbusterTool
 from .tools.gobuster import GobusterTool
 from .tools.wenum import WenumTool
+from .tools.nikto import NiktoTool
 
 Base.metadata.create_all(bind=engine)
 run_migrations()
@@ -29,6 +30,7 @@ TOOLS = {
     "feroxbuster":  FeroxbusterTool(),
     "gobuster":     GobusterTool(),
     "wenum":        WenumTool(),
+    "nikto":        NiktoTool(),
 }
 
 WORDLIST_PRESETS = [

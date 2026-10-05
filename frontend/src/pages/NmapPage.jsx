@@ -4,8 +4,10 @@ import ScanForm    from '../components/ScanForm'
 import ScanHistory from '../components/ScanHistory'
 import ScanProgress from '../components/ScanProgress'
 import ScanResults  from '../components/ScanResults'
+import CommandBar   from '../components/CommandBar'
 import { createJob, openJobSocket } from '../api'
 import { getProxyUrl } from '../utils/proxy'
+import { buildNmapCommand } from '../utils/nmapCommand'
 
 const { Sider, Content } = Layout
 
@@ -20,13 +22,39 @@ export default function NmapPage() {
   const [error, setError]           = useState(null)
   const wsRef = useRef(null)
 
+  // Command bar state
+  const [autoCommand, setAutoCommand] = useState('nmap -sT -T3 <target>')
+  const [editedCommand, setEditedCommand] = useState(null)   // null = not dirty
+  const isDirty = editedCommand !== null
+  const displayCommand = isDirty ? editedCommand : autoCommand
+
+  const handleOptionsChange = useCallback((target, options) => {
+    const cmd = buildNmapCommand(target, options)
+    setAutoCommand(cmd)
+    // Only reset dirty state if user hasn't touched it yet
+    setEditedCommand(prev => prev === null ? null : prev)
+  }, [])
+
+  const handleCommandEdit = (val) => {
+    setEditedCommand(val)
+  }
+
+  const handleCommandReset = () => {
+    setEditedCommand(null)
+  }
+
   const handleScan = useCallback(async (target, options) => {
     setScanning(true); setStopping(false)
     setLines([]); setDisc({ hosts: [], ports: [] })
     setResult(null); setError(null)
     try {
       const proxyUrl = getProxyUrl()
-      const job = await createJob('nmap', target, { ...options, ...(proxyUrl ? { proxy_url: proxyUrl } : {}) })
+      const jobOptions = {
+        ...options,
+        ...(proxyUrl ? { proxy_url: proxyUrl } : {}),
+        ...(isDirty ? { raw_command: editedCommand } : {}),
+      }
+      const job = await createJob('nmap', target, jobOptions)
       const ws  = openJobSocket(job.id, (msg) => {
         if (msg.type === 'progress')   setLines(p => [...p, msg])
         else if (msg.type === 'found_port') { setLines(p => [...p, msg]); setDisc(p => ({ ...p, ports: [...p.ports, msg] })) }
@@ -38,7 +66,7 @@ export default function NmapPage() {
       }, () => { setScanning(false); setStopping(false); setHistoryKey(n => n + 1) })
       wsRef.current = ws
     } catch (e) { setError(e.message); setScanning(false) }
-  }, [])
+  }, [isDirty, editedCommand])
 
   const handleStop = useCallback(() => {
     wsRef.current?.send(JSON.stringify({ type: 'cancel' }))
@@ -46,23 +74,37 @@ export default function NmapPage() {
   }, [])
 
   return (
-    <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <Sider width={300} style={{ background: token.colorBgContainer, padding: 20, borderRight: `1px solid ${token.colorBorderSecondary}`, overflowY: 'auto', height: '100%' }}>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <ScanForm onScan={handleScan} onStop={handleStop} scanning={scanning} stopping={stopping} />
-          <ScanHistory key={historyKey} onSelect={setResult} tool="nmap" />
-        </Space>
-      </Sider>
-      <Content style={{ padding: 24, background: token.colorBgLayout, overflowY: 'auto' }}>
-        {error && <div style={{ color: token.colorError, marginBottom: 16 }}>Error: {error}</div>}
-        {scanning && <ScanProgress lines={progressLines} discoveries={discoveries} />}
-        {!scanning && result && <ScanResults result={result} />}
-        {!scanning && !result && !error && (
-          <div style={{ textAlign: 'center', marginTop: 100, color: token.colorTextDisabled, fontSize: 16 }}>
-            Configure a scan on the left to get started
-          </div>
-        )}
-      </Content>
+    <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden', flexDirection: 'column' }}>
+      <CommandBar
+        command={displayCommand}
+        onChange={handleCommandEdit}
+        isDirty={isDirty}
+        onReset={handleCommandReset}
+      />
+      <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <Sider width={300} style={{ background: token.colorBgContainer, padding: 20, borderRight: `1px solid ${token.colorBorderSecondary}`, overflowY: 'auto', height: '100%' }}>
+          <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <ScanForm
+              onScan={handleScan}
+              onStop={handleStop}
+              scanning={scanning}
+              stopping={stopping}
+              onOptionsChange={handleOptionsChange}
+            />
+            <ScanHistory key={historyKey} onSelect={setResult} tool="nmap" />
+          </Space>
+        </Sider>
+        <Content style={{ padding: 24, background: token.colorBgLayout, overflowY: 'auto' }}>
+          {error && <div style={{ color: token.colorError, marginBottom: 16 }}>Error: {error}</div>}
+          {scanning && <ScanProgress lines={progressLines} discoveries={discoveries} />}
+          {!scanning && result && <ScanResults result={result} />}
+          {!scanning && !result && !error && (
+            <div style={{ textAlign: 'center', marginTop: 100, color: token.colorTextDisabled, fontSize: 16 }}>
+              Configure a scan on the left to get started
+            </div>
+          )}
+        </Content>
+      </Layout>
     </Layout>
   )
 }
