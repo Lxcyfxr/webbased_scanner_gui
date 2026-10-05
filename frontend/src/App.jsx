@@ -72,13 +72,14 @@ function AppLayout({ isDark, onToggleDark }) {
   }, [])
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 10,
           padding: '0 24px',
+          flexShrink: 0,
           background: token.colorBgContainer,
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
         }}
@@ -95,7 +96,7 @@ function AppLayout({ isDark, onToggleDark }) {
         />
       </Header>
 
-      <Layout>
+      <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <Sider
           width={300}
           style={{
@@ -103,6 +104,7 @@ function AppLayout({ isDark, onToggleDark }) {
             padding: 20,
             borderRight: `1px solid ${token.colorBorderSecondary}`,
             overflowY: 'auto',
+            height: '100%',
           }}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="large">
@@ -111,7 +113,7 @@ function AppLayout({ isDark, onToggleDark }) {
           </Space>
         </Sider>
 
-        <Content style={{ padding: 24, background: token.colorBgLayout }}>
+        <Content style={{ padding: 24, background: token.colorBgLayout, overflowY: 'auto', height: '100%' }}>
           {error && (
             <div style={{ color: token.colorError, marginBottom: 16 }}>Error: {error}</div>
           )}

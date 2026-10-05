@@ -131,13 +131,14 @@ export default function HistoryPage() {
   ]
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
           padding: '0 24px',
+          flexShrink: 0,
           background: token.colorBgContainer,
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
         }}
@@ -151,7 +152,7 @@ export default function HistoryPage() {
         </Button>
       </Header>
 
-      <Content style={{ padding: 24, background: token.colorBgLayout }}>
+      <Content style={{ padding: 24, background: token.colorBgLayout, overflowY: 'auto', flex: 1, minHeight: 0 }}>
         <Table
           dataSource={scans}
           columns={columns}

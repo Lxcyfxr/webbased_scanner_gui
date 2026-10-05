@@ -36,7 +36,7 @@ function countAdvanced(vals) {
 function Info({ tip }) {
   return (
     <Tooltip title={tip} placement="right" overlayStyle={{ maxWidth: 280 }}>
-      <InfoCircleOutlined style={{ marginLeft: 5, fontSize: 11, color: '#8c8c8c', cursor: 'help' }} />
+      <InfoCircleOutlined style={{ marginLeft: 5, fontSize: 12, color: '#8c8c8c', verticalAlign: 'middle', flexShrink: 0 }} />
     </Tooltip>
   )
 }
@@ -44,7 +44,7 @@ function Info({ tip }) {
 // Form.Item label with inline info icon
 function InfoLabel({ label, tip }) {
   return (
-    <span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 0 }}>
       {label}
       <Info tip={tip} />
     </span>
