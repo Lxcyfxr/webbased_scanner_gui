@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import asyncio
@@ -110,6 +110,18 @@ def get_scan(scan_id: str, db: Session = Depends(get_db)):
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
     return scan
+
+
+@app.get("/scans/{scan_id}/xml")
+def get_scan_xml(scan_id: str, db: Session = Depends(get_db)):
+    scan = db.query(Scan).filter(Scan.id == scan_id).first()
+    if not scan or not scan.result_xml:
+        raise HTTPException(status_code=404, detail="XML not available")
+    return Response(
+        content=scan.result_xml,
+        media_type="application/xml",
+        headers={"Content-Disposition": f"attachment; filename=scan_{scan_id}.xml"},
+    )
 
 
 @app.delete("/scans/{scan_id}", status_code=204)
