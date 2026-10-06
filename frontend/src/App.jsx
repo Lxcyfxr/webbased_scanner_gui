@@ -4,6 +4,7 @@ import { ConfigProvider, Layout, Typography, Switch, Space, Button, Badge, Toolt
 import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import ActivityBar    from './components/ActivityBar'
 import ProxyModal     from './components/ProxyModal'
+import StartPage      from './pages/StartPage'
 import NmapPage       from './pages/NmapPage'
 import FuzzingPage    from './pages/FuzzingPage'
 import MsfPage        from './pages/MsfPage'
@@ -58,7 +59,7 @@ function Shell({ isDark, onToggleDark }) {
         <ActivityBar />
 
         <Routes>
-          <Route path="/"               element={<Navigate to="/tool/nmap" replace />} />
+          <Route path="/"               element={<StartPage />} />
           <Route path="/tool/nmap"      element={<NmapPage />} />
           <Route path="/tool/fuzzing"     element={<FuzzingPage />} />
           <Route path="/tool/metasploit" element={<MsfPage />} />

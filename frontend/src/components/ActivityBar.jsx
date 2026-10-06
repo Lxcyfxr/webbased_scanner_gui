@@ -1,8 +1,9 @@
 import { Tooltip, theme as antTheme } from 'antd'
-import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined, KeyOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined, KeyOutlined, HomeOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const ITEMS = [
+  { path: '/',                icon: <HomeOutlined />,        label: 'Start'          },
   { path: '/tool/nmap',       icon: <RadarChartOutlined />, label: 'Network (nmap)' },
   { path: '/tool/fuzzing',    icon: <BugOutlined />,        label: 'Web Fuzzing'    },
   { path: '/tool/nikto',      icon: <SafetyOutlined />,       label: 'Nikto'          },
@@ -33,7 +34,9 @@ export default function ActivityBar() {
       }}
     >
       {ITEMS.map(item => {
-        const active = pathname.startsWith(item.path)
+        const active = item.path === '/'
+          ? pathname === '/'
+          : pathname.startsWith(item.path)
         return (
           <Tooltip key={item.path} title={item.label} placement="right">
             <div
