@@ -14,6 +14,7 @@ from .models import Job
 from .schemas import JobCreate, JobResponse
 from .runner import run_job
 from .msf.routes import router as msf_router
+from .http_client import router as http_router
 from .tools.nmap import NmapTool
 from .tools.ffuf import FfufTool
 from .tools.feroxbuster import FeroxbusterTool
@@ -71,6 +72,7 @@ async def security_headers(request: Request, call_next):
     return response
 
 app.include_router(msf_router)
+app.include_router(http_router)
 
 _active: dict[str, asyncio.Queue] = {}
 
