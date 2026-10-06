@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlparse, urlunparse
 from .base import BaseTool
 
 _HEADER_PREFIXES = (
@@ -43,7 +44,6 @@ class NiktoTool(BaseTool):
         host = target
         # Nikto rejects -port when target is a full URI; embed port in URL instead
         if port and str(port).isdigit() and re.match(r'^https?://', target):
-            from urllib.parse import urlparse, urlunparse
             parsed = urlparse(target)
             host = urlunparse(parsed._replace(netloc=f"{parsed.hostname}:{port}"))
             port = None

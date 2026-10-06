@@ -22,17 +22,13 @@ export default function NmapPage() {
   const [error, setError]           = useState(null)
   const wsRef = useRef(null)
 
-  // Command bar state
   const [autoCommand, setAutoCommand] = useState('nmap -sT -T3 <target>')
-  const [editedCommand, setEditedCommand] = useState(null)   // null = not dirty
+  const [editedCommand, setEditedCommand] = useState(null)
   const isDirty = editedCommand !== null
   const displayCommand = isDirty ? editedCommand : autoCommand
 
   const handleOptionsChange = useCallback((target, options) => {
-    const cmd = buildNmapCommand(target, options)
-    setAutoCommand(cmd)
-    // Only reset dirty state if user hasn't touched it yet
-    setEditedCommand(prev => prev === null ? null : prev)
+    setAutoCommand(buildNmapCommand(target, options))
   }, [])
 
   const handleCommandEdit = (val) => {

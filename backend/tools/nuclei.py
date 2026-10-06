@@ -28,8 +28,8 @@ class NucleiTool(BaseTool):
             "-no-interactsh",   # disable OOB interaction server
         ]
 
-        severity = options.get("severity")  # list like ["critical","high"]
-        if severity and isinstance(severity, list) and severity:
+        severity = options.get("severity")
+        if severity and isinstance(severity, list):
             cmd.extend(["-severity", ",".join(severity)])
 
         tags = options.get("tags", "").strip()
@@ -59,7 +59,6 @@ class NucleiTool(BaseTool):
             return None
         try:
             obj = json.loads(line)
-            # A valid finding always has template-id and info.severity
             if "template-id" in obj and "info" in obj:
                 info = obj["info"]
                 finding = {
@@ -75,7 +74,6 @@ class NucleiTool(BaseTool):
                     "extracted":    obj.get("extracted-results", []),
                 }
                 return {"type": "found", "data": finding}
-            # Stats / progress JSON lines
             return {"type": "progress", "data": line}
         except (json.JSONDecodeError, KeyError):
             return {"type": "progress", "data": line}

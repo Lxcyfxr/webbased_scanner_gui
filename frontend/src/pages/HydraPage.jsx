@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Layout, Form, Input, InputNumber, Button, Table, Tag, Typography,
   Space, Divider, Select, Badge, Switch, Checkbox, Radio,
-  theme as antTheme, Tooltip, Alert,
+  theme as antTheme, Tooltip,
 } from 'antd'
 import {
   PlayCircleOutlined, StopOutlined, KeyOutlined, InfoCircleOutlined,
@@ -32,12 +32,8 @@ const USER_PRESETS = [
   { label: 'SecLists / Names/names.txt',  value: '/usr/share/seclists/Usernames/Names/names.txt' },
 ]
 
-const wsBase = () => {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}`
-}
+import { createJob, openJobSocket } from '../api'
 
-// login/password input mode
 const MODE = { SINGLE: 'single', FILE: 'file', PRESET: 'preset' }
 
 export default function HydraPage() {
@@ -99,31 +95,16 @@ export default function HydraPage() {
 
     const options = buildOptions(values)
 
-    let res
+    let job
     try {
-      res = await fetch('/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'hydra', target: values.target, options }),
-      })
+      job = await createJob('hydra', values.target, options)
     } catch (e) {
       setLog(l => [...l, `Error: ${e.message}`])
       return
     }
-    if (!res.ok) {
-      const err = await res.json()
-      setLog(l => [...l, `Error: ${err.detail}`])
-      return
-    }
-
-    const job = await res.json()
     setRunning(true)
 
-    const ws = new WebSocket(`${wsBase()}/ws/jobs/${job.id}`)
-    wsRef.current = ws
-
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data)
+    wsRef.current = openJobSocket(job.id, (msg) => {
       if (msg.type === 'found') {
         setCreds(c => {
           const key = `${msg.data.host}:${msg.data.port}:${msg.data.login}:${msg.data.password}`
@@ -135,9 +116,7 @@ export default function HydraPage() {
       } else if (msg.type === 'done') {
         setRunning(false)
       }
-    }
-    ws.onclose = () => setRunning(false)
-    ws.onerror = () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) }
+    }, () => setRunning(false), () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) })
   }
 
   const stopScan = () => {

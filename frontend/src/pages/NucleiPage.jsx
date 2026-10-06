@@ -6,6 +6,7 @@ import {
 import {
   PlayCircleOutlined, StopOutlined, ThunderboltOutlined, InfoCircleOutlined,
 } from '@ant-design/icons'
+import { createJob, openJobSocket } from '../api'
 import { loadProxy } from '../utils/proxy'
 
 const { Sider, Content } = Layout
@@ -27,11 +28,6 @@ const SEV_OPTIONS = [
   { value: 'low',      label: 'Low'      },
   { value: 'info',     label: 'Info'     },
 ]
-
-const wsBase = () => {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}`
-}
 
 export default function NucleiPage() {
   const { token } = antTheme.useToken()
@@ -61,31 +57,16 @@ export default function NucleiPage() {
                     ? `http://${proxy.host}:${proxy.port}` : undefined,
     }
 
-    let res
+    let job
     try {
-      res = await fetch('/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'nuclei', target: values.target, options }),
-      })
+      job = await createJob('nuclei', values.target, options)
     } catch (e) {
       setLog(l => [...l, `Error: ${e.message}`])
       return
     }
-    if (!res.ok) {
-      const err = await res.json()
-      setLog(l => [...l, `Error: ${err.detail}`])
-      return
-    }
-
-    const job = await res.json()
     setRunning(true)
 
-    const ws = new WebSocket(`${wsBase()}/ws/jobs/${job.id}`)
-    wsRef.current = ws
-
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data)
+    wsRef.current = openJobSocket(job.id, (msg) => {
       if (msg.type === 'found') {
         setFindings(f => [...f, { key: f.length, ...msg.data }])
       } else if (msg.type === 'progress') {
@@ -93,9 +74,7 @@ export default function NucleiPage() {
       } else if (msg.type === 'done') {
         setRunning(false)
       }
-    }
-    ws.onclose = () => setRunning(false)
-    ws.onerror = () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) }
+    }, () => setRunning(false), () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) })
   }
 
   const stopScan = () => {

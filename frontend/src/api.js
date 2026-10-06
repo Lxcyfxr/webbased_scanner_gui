@@ -26,9 +26,10 @@ export const deleteJob     = (id)   =>
 export const listWordlists = ()     =>
   fetch(`${BASE}/wordlists`).then(r => r.json())
 
-export const openJobSocket = (id, onMessage, onClose) => {
+export const openJobSocket = (id, onMessage, onClose, onError) => {
   const ws = new WebSocket(`${wsBase()}/ws/jobs/${id}`)
   ws.onmessage = e => onMessage(JSON.parse(e.data))
-  if (onClose) ws.onclose = onClose
+  if (onClose)  ws.onclose = onClose
+  if (onError)  ws.onerror = onError
   return ws
 }

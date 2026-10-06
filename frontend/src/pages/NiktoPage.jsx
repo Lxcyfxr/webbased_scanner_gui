@@ -6,6 +6,7 @@ import {
 import {
   PlayCircleOutlined, StopOutlined, SafetyOutlined, InfoCircleOutlined,
 } from '@ant-design/icons'
+import { createJob, openJobSocket } from '../api'
 import { loadProxy } from '../utils/proxy'
 
 const { Sider, Content } = Layout
@@ -32,11 +33,6 @@ const TUNING_OPTIONS = [
   { value: 'c', label: 'c – Remote source inclusion' },
 ]
 
-const wsBase = () => {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}`
-}
-
 export default function NiktoPage() {
   const { token } = antTheme.useToken()
   const [form] = Form.useForm()
@@ -44,7 +40,6 @@ export default function NiktoPage() {
   const [findings, setFindings]   = useState([])
   const [log, setLog]             = useState([])
   const [info, setInfo]           = useState(null)
-  const [jobId, setJobId]         = useState(null)
   const wsRef  = useRef(null)
   const logRef = useRef(null)
 
@@ -68,32 +63,16 @@ export default function NiktoPage() {
                    ? `http://${proxy.host}:${proxy.port}` : undefined,
     }
 
-    let res
+    let job
     try {
-      res = await fetch('/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool: 'nikto', target: values.target, options }),
-      })
+      job = await createJob('nikto', values.target, options)
     } catch (e) {
       setLog(l => [...l, `Error: ${e.message}`])
       return
     }
-    if (!res.ok) {
-      const err = await res.json()
-      setLog(l => [...l, `Error: ${err.detail}`])
-      return
-    }
-
-    const job = await res.json()
-    setJobId(job.id)
     setRunning(true)
 
-    const ws = new WebSocket(`${wsBase()}/ws/jobs/${job.id}`)
-    wsRef.current = ws
-
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data)
+    wsRef.current = openJobSocket(job.id, (msg) => {
       if (msg.type === 'found') {
         setFindings(f => [...f, { key: f.length, ...msg.data }])
       } else if (msg.type === 'progress') {
@@ -102,9 +81,7 @@ export default function NiktoPage() {
         if (msg.json?.info) setInfo(msg.json.info)
         setRunning(false)
       }
-    }
-    ws.onclose = () => setRunning(false)
-    ws.onerror = () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) }
+    }, () => setRunning(false), () => { setRunning(false); setLog(l => [...l, 'WebSocket error']) })
   }
 
   const stopScan = () => {
