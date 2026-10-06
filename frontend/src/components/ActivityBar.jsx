@@ -1,5 +1,5 @@
 import { Tooltip, theme as antTheme } from 'antd'
-import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined, KeyOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const ITEMS = [
@@ -7,7 +7,8 @@ const ITEMS = [
   { path: '/tool/fuzzing',    icon: <BugOutlined />,        label: 'Web Fuzzing'    },
   { path: '/tool/nikto',      icon: <SafetyOutlined />,       label: 'Nikto'          },
   { path: '/tool/nuclei',     icon: <ThunderboltOutlined />, label: 'Nuclei'         },
-  { path: '/tool/http',       icon: <ApiOutlined />,        label: 'HTTP Client'    },
+  { path: '/tool/hydra',      icon: <KeyOutlined />,         label: 'Hydra'          },
+  { path: '/tool/http',       icon: <ApiOutlined />,         label: 'HTTP Client'    },
   { path: '/tool/metasploit', icon: <AimOutlined />,         label: 'Metasploit'     },
   { path: '/history',         icon: <HistoryOutlined />,    label: 'History'        },
 ]
