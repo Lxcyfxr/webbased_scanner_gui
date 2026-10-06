@@ -1,26 +1,35 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   Layout, Form, Input, InputNumber, Button, Table, Tag, Typography,
-  Space, Divider, Select, Badge, Switch, Checkbox, theme as antTheme, Tooltip,
+  Space, Divider, Select, Badge, Switch, Checkbox, Radio,
+  theme as antTheme, Tooltip, Alert,
 } from 'antd'
 import {
   PlayCircleOutlined, StopOutlined, KeyOutlined, InfoCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 
 const { Sider, Content } = Layout
 const { Text, Title } = Typography
 
 const SERVICE_OPTIONS = [
-  'ssh', 'ftp', 'ftps', 'telnet', 'smtp', 'pop3', 'imap',
-  'http-get', 'http-post-form', 'https-get', 'https-post-form', 'http-head',
-  'mysql', 'postgres', 'mssql', 'vnc', 'rdp', 'smb', 'snmp',
-  'ldap2', 'ldap3', 'redis', 'rsh', 'rlogin',
+  'ssh', 'ftp', 'ftps', 'telnet',
+  'smtp', 'smtps', 'pop3', 'pop3s', 'imap', 'imaps',
+  'http-get', 'http-post-form', 'https-get', 'https-post-form',
+  'mysql', 'postgres', 'mssql', 'redis',
+  'vnc', 'rdp', 'smb', 'snmp', 'ldap2', 'ldap3',
 ].map(s => ({ value: s, label: s }))
 
-const EXTRA_OPTIONS = [
-  { value: 'n', label: 'null password (n)' },
-  { value: 's', label: 'login as password (s)' },
-  { value: 'r', label: 'reversed login (r)' },
+const PASS_PRESETS = [
+  { label: 'rockyou.txt',                 value: '/usr/share/wordlists/rockyou.txt' },
+  { label: 'SecLists / top-passwords-shortlist', value: '/usr/share/seclists/Passwords/Common-Credentials/top-passwords-shortlist.txt' },
+  { label: 'SecLists / darkweb2017-top100', value: '/usr/share/seclists/Passwords/darkweb2017-top100.txt' },
+  { label: 'SecLists / 10k-most-common',  value: '/usr/share/seclists/Passwords/Common-Credentials/10k-most-common.txt' },
+]
+
+const USER_PRESETS = [
+  { label: 'SecLists / top-usernames-shortlist', value: '/usr/share/seclists/Usernames/top-usernames-shortlist.txt' },
+  { label: 'SecLists / Names/names.txt',  value: '/usr/share/seclists/Usernames/Names/names.txt' },
 ]
 
 const wsBase = () => {
@@ -28,18 +37,21 @@ const wsBase = () => {
   return `${proto}//${window.location.host}`
 }
 
+// login/password input mode
+const MODE = { SINGLE: 'single', FILE: 'file', PRESET: 'preset' }
+
 export default function HydraPage() {
   const { token } = antTheme.useToken()
   const [form] = Form.useForm()
-  const [running, setRunning] = useState(false)
-  const [creds, setCreds]     = useState([])
-  const [log, setLog]         = useState([])
+  const [running, setRunning]     = useState(false)
+  const [creds,   setCreds]       = useState([])
+  const [log,     setLog]         = useState([])
   const wsRef  = useRef(null)
   const logRef = useRef(null)
 
-  // Toggle wordlist vs. single value for login/password fields
-  const [loginList, setLoginList] = useState(false)
-  const [passList,  setPassList]  = useState(true)
+  const [loginMode, setLoginMode] = useState(MODE.SINGLE)
+  const [passMode,  setPassMode]  = useState(MODE.PRESET)
+  const [verbose,   setVerbose]   = useState(false)
 
   const service = Form.useWatch('service', form)
   const isForm  = service === 'http-post-form' || service === 'https-post-form'
@@ -48,24 +60,44 @@ export default function HydraPage() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' })
   }, [log])
 
+  const buildOptions = (values) => {
+    const opts = {
+      service:      values.service || 'ssh',
+      port:         values.port    || undefined,
+      tasks:        values.tasks   || 4,
+      wait:         values.wait    || undefined,
+      stop_on_first: values.stop_on_first ?? true,
+      verbose:      verbose,
+      extra:        values.extra?.length ? values.extra : undefined,
+      module_args:  isForm ? (values.module_args || '') : '',
+    }
+
+    // login
+    if (loginMode === MODE.SINGLE) {
+      opts.login      = (values.login_single || '').trim()
+    } else if (loginMode === MODE.FILE) {
+      opts.login_file = (values.login_file || '').trim()
+    } else {
+      opts.login_file = values.login_preset || ''
+    }
+
+    // password
+    if (passMode === MODE.SINGLE) {
+      opts.password      = (values.pass_single || '').trim()
+    } else if (passMode === MODE.FILE) {
+      opts.password_file = (values.pass_file || '').trim()
+    } else {
+      opts.password_file = values.pass_preset || PASS_PRESETS[0].value
+    }
+
+    return opts
+  }
+
   const startScan = async (values) => {
     setCreds([])
     setLog([])
 
-    const options = {
-      service:       values.service,
-      login:         loginList ? undefined : (values.login || undefined),
-      login_file:    loginList ? (values.login || undefined) : undefined,
-      password:      passList ? undefined : (values.password ?? undefined),
-      password_file: passList ? (values.password || undefined) : undefined,
-      extra:         values.extra?.length ? values.extra : undefined,
-      port:          values.port || undefined,
-      tasks:         values.tasks || undefined,
-      wait:          values.wait || undefined,
-      stop_on_first: values.stop_on_first ?? true,
-      verbose:       values.verbose ?? true,
-      module_args:   isForm ? (values.module_args || '') : '',
-    }
+    const options = buildOptions(values)
 
     let res
     try {
@@ -117,35 +149,41 @@ export default function HydraPage() {
   const columns = [
     {
       title: 'Service',
-      dataIndex: 'service',
-      width: 90,
-      render: (v, r) => <Tag color="geekblue" style={{ fontSize: 10, margin: 0 }}>{v}:{r.port}</Tag>,
+      key: 'svc',
+      width: 110,
+      render: (_, r) => <Tag color="geekblue" style={{ fontSize: 10, margin: 0 }}>{r.service}:{r.port}</Tag>,
     },
     {
       title: 'Host',
       dataIndex: 'host',
-      width: 140,
+      width: 130,
       render: v => <Text style={{ fontSize: 12 }}>{v}</Text>,
     },
     {
       title: 'Login',
       dataIndex: 'login',
-      render: v => <Text code style={{ fontSize: 11 }}>{v}</Text>,
+      render: v => <Text code style={{ fontSize: 11 }}>{v || '—'}</Text>,
     },
     {
       title: 'Password',
       dataIndex: 'password',
-      render: v => <Text code style={{ fontSize: 11, color: token.colorSuccess }}>{v}</Text>,
+      render: v => <Text code style={{ fontSize: 11, color: token.colorSuccess }}>{v || '—'}</Text>,
     },
+  ]
+
+  const modeOpts = [
+    { label: 'Single',  value: MODE.SINGLE  },
+    { label: 'File',    value: MODE.FILE     },
+    { label: 'Preset',  value: MODE.PRESET   },
   ]
 
   return (
     <Layout style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <Sider
-        width={300}
+        width={310}
         style={{
           background: token.colorBgContainer,
-          padding: 20,
+          padding: 16,
           borderRight: `1px solid ${token.colorBorderSecondary}`,
           overflowY: 'auto',
           height: '100%',
@@ -156,7 +194,7 @@ export default function HydraPage() {
           <Text type="secondary" style={{ fontSize: 11 }}>
             Online credential testing — authorised use only
           </Text>
-          <Divider style={{ margin: '8px 0' }} />
+          <Divider style={{ margin: '6px 0' }} />
 
           <Form
             form={form}
@@ -164,96 +202,148 @@ export default function HydraPage() {
             size="small"
             onFinish={startScan}
             initialValues={{
-              service: 'ssh', tasks: 16, stop_on_first: true, verbose: true,
+              service: 'ssh',
+              tasks: 4,
+              stop_on_first: true,
+              pass_preset: PASS_PRESETS[0].value,
             }}
           >
+            {/* ── Target ── */}
             <Form.Item
               name="target"
-              label="Target host"
-              rules={[{ required: true, message: 'Enter a target host/IP' }]}
+              label="Target"
+              rules={[{ required: true, message: 'Enter a target host / IP' }]}
+              style={{ marginBottom: 8 }}
             >
               <Input placeholder="192.168.1.10 or host.local" autoComplete="off" />
             </Form.Item>
 
-            <Space style={{ width: '100%' }} size="small">
-              <Form.Item name="service" label="Service" style={{ flex: 1, marginBottom: 12 }}>
-                <Select showSearch options={SERVICE_OPTIONS} style={{ width: 150 }} />
+            <Space size="small" style={{ width: '100%', marginBottom: 8 }}>
+              <Form.Item name="service" label="Service" style={{ marginBottom: 0 }}>
+                <Select showSearch options={SERVICE_OPTIONS} style={{ width: 160 }} />
               </Form.Item>
-              <Form.Item name="port" label="Port" style={{ marginBottom: 12 }}>
+              <Form.Item name="port" label="Port" style={{ marginBottom: 0 }}>
                 <InputNumber min={1} max={65535} placeholder="default" style={{ width: 90 }} />
               </Form.Item>
             </Space>
 
             {isForm && (
-              <Form.Item name="module_args" label={
-                <Tooltip title='Form string: "/path:user=^USER^&pass=^PASS^:F=failtext"'>
-                  <span>Form string <InfoCircleOutlined style={{ fontSize: 10 }} /></span>
-                </Tooltip>
-              }>
+              <Form.Item
+                name="module_args"
+                label={
+                  <Tooltip title='Format: "/path:user=^USER^&pass=^PASS^:F=failtext"'>
+                    <span>Form string <InfoCircleOutlined style={{ fontSize: 10 }} /></span>
+                  </Tooltip>
+                }
+                style={{ marginBottom: 8 }}
+              >
                 <Input placeholder="/login:user=^USER^&pass=^PASS^:F=incorrect" autoComplete="off" />
               </Form.Item>
             )}
 
-            <Divider style={{ margin: '4px 0 10px' }} orientation="left" plain>
-              <Text type="secondary" style={{ fontSize: 11 }}>Login</Text>
+            <Divider orientation="left" plain style={{ margin: '6px 0', fontSize: 11 }}>
+              <Text type="secondary">Login</Text>
             </Divider>
-            <Form.Item style={{ marginBottom: 6 }}>
-              <Switch size="small" checked={loginList} onChange={setLoginList} />
-              <Text style={{ fontSize: 11, marginLeft: 8 }}>
-                {loginList ? 'Username wordlist (file path)' : 'Single username'}
-              </Text>
-            </Form.Item>
-            <Form.Item name="login">
-              <Input
-                placeholder={loginList ? '/usr/share/wordlists/users.txt' : 'root'}
-                autoComplete="off"
-              />
-            </Form.Item>
 
-            <Divider style={{ margin: '4px 0 10px' }} orientation="left" plain>
-              <Text type="secondary" style={{ fontSize: 11 }}>Password</Text>
+            <Radio.Group
+              size="small"
+              value={loginMode}
+              onChange={e => setLoginMode(e.target.value)}
+              style={{ marginBottom: 6 }}
+              options={modeOpts}
+              optionType="button"
+            />
+
+            {loginMode === MODE.SINGLE && (
+              <Form.Item name="login_single" style={{ marginBottom: 6 }}>
+                <Input placeholder="root" autoComplete="off" />
+              </Form.Item>
+            )}
+            {loginMode === MODE.FILE && (
+              <Form.Item name="login_file" style={{ marginBottom: 6 }}>
+                <Input placeholder="/usr/share/wordlists/users.txt" autoComplete="off" />
+              </Form.Item>
+            )}
+            {loginMode === MODE.PRESET && (
+              <Form.Item name="login_preset" style={{ marginBottom: 6 }}>
+                <Select options={USER_PRESETS} placeholder="Select preset…" allowClear />
+              </Form.Item>
+            )}
+
+            <Divider orientation="left" plain style={{ margin: '6px 0', fontSize: 11 }}>
+              <Text type="secondary">Password</Text>
             </Divider>
-            <Form.Item style={{ marginBottom: 6 }}>
-              <Switch size="small" checked={passList} onChange={setPassList} />
-              <Text style={{ fontSize: 11, marginLeft: 8 }}>
-                {passList ? 'Password wordlist (file path)' : 'Single password'}
-              </Text>
-            </Form.Item>
-            <Form.Item name="password">
-              <Input
-                placeholder={passList ? '/usr/share/wordlists/rockyou.txt' : 'toor'}
-                autoComplete="off"
-              />
+
+            <Radio.Group
+              size="small"
+              value={passMode}
+              onChange={e => setPassMode(e.target.value)}
+              style={{ marginBottom: 6 }}
+              options={modeOpts}
+              optionType="button"
+            />
+
+            {passMode === MODE.SINGLE && (
+              <Form.Item name="pass_single" style={{ marginBottom: 6 }}>
+                <Input placeholder="toor" autoComplete="off" />
+              </Form.Item>
+            )}
+            {passMode === MODE.FILE && (
+              <Form.Item name="pass_file" style={{ marginBottom: 6 }}>
+                <Input placeholder="/usr/share/wordlists/rockyou.txt" autoComplete="off" />
+              </Form.Item>
+            )}
+            {passMode === MODE.PRESET && (
+              <Form.Item name="pass_preset" style={{ marginBottom: 6 }}>
+                <Select options={PASS_PRESETS} />
+              </Form.Item>
+            )}
+
+            <Form.Item name="extra" label="Also try" style={{ marginBottom: 8 }}>
+              <Checkbox.Group style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Checkbox value="n">null password</Checkbox>
+                <Checkbox value="s">login as password</Checkbox>
+                <Checkbox value="r">reversed login</Checkbox>
+              </Checkbox.Group>
             </Form.Item>
 
-            <Form.Item name="extra" label="Also try" style={{ marginBottom: 10 }}>
-              <Checkbox.Group options={EXTRA_OPTIONS} style={{ display: 'flex', flexDirection: 'column', gap: 2 }} />
-            </Form.Item>
+            <Divider orientation="left" plain style={{ margin: '6px 0', fontSize: 11 }}>
+              <Text type="secondary">Options</Text>
+            </Divider>
 
-            <Space style={{ width: '100%' }} size="small">
+            <Space size="small" style={{ width: '100%', marginBottom: 6 }}>
               <Form.Item name="tasks" label={
-                <Tooltip title="Parallel connections (-t). Lower is gentler.">
+                <Tooltip title="Parallel connections. SSH: keep ≤ 4">
                   <span>Tasks <InfoCircleOutlined style={{ fontSize: 10 }} /></span>
                 </Tooltip>
-              } style={{ marginBottom: 10 }}>
-                <InputNumber min={1} max={64} style={{ width: 90 }} />
+              } style={{ marginBottom: 0 }}>
+                <InputNumber min={1} max={64} style={{ width: 80 }} />
               </Form.Item>
-              <Form.Item name="wait" label="Timeout (s)" style={{ marginBottom: 10 }}>
-                <InputNumber min={1} max={120} placeholder="default" style={{ width: 90 }} />
+              <Form.Item name="wait" label="Timeout (s)" style={{ marginBottom: 0 }}>
+                <InputNumber min={1} max={120} placeholder="30" style={{ width: 80 }} />
               </Form.Item>
             </Space>
 
             <Form.Item name="stop_on_first" valuePropName="checked" style={{ marginBottom: 4 }}>
               <Checkbox>Stop after first valid pair (-f)</Checkbox>
             </Form.Item>
-            <Form.Item name="verbose" valuePropName="checked" style={{ marginBottom: 12 }}>
-              <Checkbox>Verbose — show each attempt (-V)</Checkbox>
-            </Form.Item>
+
+            <Space size={6} align="center" style={{ marginBottom: 10 }}>
+              <Switch
+                size="small"
+                checked={verbose}
+                onChange={setVerbose}
+              />
+              <Text style={{ fontSize: 11 }}>
+                Show attempts (-V)
+              </Text>
+              <Tooltip title="Prints every login attempt — can generate millions of lines with large wordlists">
+                <WarningOutlined style={{ color: token.colorWarning, fontSize: 11 }} />
+              </Tooltip>
+            </Space>
 
             {running ? (
-              <Button danger icon={<StopOutlined />} block onClick={stopScan}>
-                Stop
-              </Button>
+              <Button danger icon={<StopOutlined />} block onClick={stopScan}>Stop</Button>
             ) : (
               <Button type="primary" icon={<PlayCircleOutlined />} htmlType="submit" block>
                 Start Attack
@@ -264,9 +354,10 @@ export default function HydraPage() {
       </Sider>
 
       <Content style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ flex: '0 0 55%', overflow: 'hidden', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+        {/* Credentials table */}
+        <div style={{ flex: '0 0 50%', overflow: 'hidden', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
           <div style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${token.colorBorderSecondary}`, flexShrink: 0 }}>
-            <KeyOutlined style={{ color: token.colorPrimary }} />
+            <KeyOutlined style={{ color: token.colorSuccess }} />
             <Text strong style={{ fontSize: 13 }}>Recovered credentials</Text>
             {creds.length > 0 && <Badge count={creds.length} color={token.colorSuccess} />}
             {running && <Badge status="processing" text={<Text style={{ fontSize: 11 }}>Running...</Text>} />}
@@ -283,11 +374,17 @@ export default function HydraPage() {
           </div>
         </div>
 
+        {/* Live log */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '6px 16px', borderBottom: `1px solid ${token.colorBorderSecondary}`, flexShrink: 0 }}>
             <Space>
               <InfoCircleOutlined style={{ color: token.colorTextSecondary }} />
               <Text style={{ fontSize: 12 }} type="secondary">Live output</Text>
+              {!verbose && !running && (
+                <Text type="secondary" style={{ fontSize: 10 }}>
+                  — enable "Show attempts" for live attempt log
+                </Text>
+              )}
             </Space>
           </div>
           <div
@@ -302,7 +399,17 @@ export default function HydraPage() {
             }}
           >
             {log.map((line, i) => (
-              <div key={i} style={{ color: token.colorTextSecondary, lineHeight: 1.6 }}>{line}</div>
+              <div
+                key={i}
+                style={{
+                  color: line.includes('[ERROR]') || line.includes('[WARNING]')
+                    ? token.colorWarning
+                    : token.colorTextSecondary,
+                  lineHeight: 1.6,
+                }}
+              >
+                {line}
+              </div>
             ))}
             {log.length === 0 && !running && (
               <Text type="secondary" style={{ fontSize: 11 }}>No output yet.</Text>
