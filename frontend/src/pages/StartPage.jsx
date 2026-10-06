@@ -84,7 +84,7 @@ export default function StartPage() {
       padding: '40px 48px',
       background: token.colorBgLayout,
     }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div>
         <Title level={3} style={{ margin: '0 0 4px' }}>Web Security GUI</Title>
         <Text type="secondary" style={{ fontSize: 14 }}>
           Wähle ein Tool — oder starte mit Nmap für die erste Reconnaissance.
@@ -92,8 +92,8 @@ export default function StartPage() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-          gap: 20,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
+          gap: 24,
           marginTop: 32,
         }}>
           {TOOLS.map(tool => {
@@ -105,8 +105,8 @@ export default function StartPage() {
                 style={{
                   background: token.colorBgContainer,
                   border: `1px solid ${token.colorBorderSecondary}`,
-                  borderRadius: 12,
-                  padding: 24,
+                  borderRadius: 14,
+                  padding: 32,
                   cursor: 'pointer',
                   transition: 'all 0.18s',
                   display: 'flex',
@@ -126,42 +126,42 @@ export default function StartPage() {
                 }}
               >
                 {/* icon + name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
                   <div style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
+                    width: 64,
+                    height: 64,
+                    borderRadius: 14,
                     background: `${tool.color}18`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}>
-                    <Icon style={{ fontSize: 24, color: tool.color }} />
+                    <Icon style={{ fontSize: 30, color: tool.color }} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 16, color: token.colorText, lineHeight: 1.2 }}>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: token.colorText, lineHeight: 1.2 }}>
                       {tool.name}
                     </div>
-                    <div style={{ fontSize: 11, color: tool.color, marginTop: 2, fontWeight: 500 }}>
+                    <div style={{ fontSize: 13, color: tool.color, marginTop: 4, fontWeight: 500 }}>
                       {tool.tagline}
                     </div>
                   </div>
                 </div>
 
                 {/* description */}
-                <Text style={{ fontSize: 13, color: token.colorTextSecondary, lineHeight: 1.55 }}>
+                <Text style={{ fontSize: 14, color: token.colorTextSecondary, lineHeight: 1.6 }}>
                   {tool.desc}
                 </Text>
 
                 {/* when to use */}
                 <div style={{
                   background: token.colorBgLayout,
-                  borderRadius: 8,
-                  padding: '8px 12px',
+                  borderRadius: 10,
+                  padding: '10px 16px',
                   borderLeft: `3px solid ${tool.color}`,
                 }}>
-                  <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>
+                  <Text style={{ fontSize: 13, color: token.colorTextSecondary }}>
                     <span style={{ fontWeight: 600, color: token.colorText }}>Wann: </span>
                     {tool.when}
                   </Text>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { ConfigProvider, Layout, Typography, Switch, Space, Button, Badge, Tooltip, theme as antTheme } from 'antd'
 import { RadarChartOutlined, MoonOutlined, SunOutlined, GithubOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import ActivityBar    from './components/ActivityBar'
@@ -20,6 +20,7 @@ const { Title } = Typography
 
 function Shell({ isDark, onToggleDark }) {
   const { token } = antTheme.useToken()
+  const navigate  = useNavigate()
   const [proxyOpen,   setProxyOpen]   = useState(false)
   const [proxyActive, setProxyActive] = useState(() => {
     const c = loadProxy()
@@ -30,7 +31,11 @@ function Shell({ isDark, onToggleDark }) {
     <Layout style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px', flexShrink: 0, background: token.colorBgContainer, borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
         <RadarChartOutlined style={{ color: token.colorPrimary, fontSize: 22 }} />
-        <Title level={4} style={{ margin: 0, flex: 1, color: token.colorText }}>
+        <Title
+          level={4}
+          onClick={() => navigate('/')}
+          style={{ margin: 0, flex: 1, color: token.colorText, cursor: 'pointer', userSelect: 'none' }}
+        >
           Web Security GUI
         </Title>
 
