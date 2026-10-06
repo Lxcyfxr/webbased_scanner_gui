@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Typography, theme as antTheme } from 'antd'
 import {
   RadarChartOutlined, BugOutlined, SafetyOutlined, ThunderboltOutlined,
-  KeyOutlined, ApiOutlined, AimOutlined,
+  KeyOutlined, ApiOutlined, AimOutlined, DatabaseOutlined,
 } from '@ant-design/icons'
 
 const { Title, Text } = Typography
@@ -61,6 +61,15 @@ const TOOLS = [
     tagline: 'Manual Request Builder',
     desc:    'Baut und sendet beliebige HTTP-Requests mit eigenen Headern, Body und Method — wie curl im Browser.',
     when:    'API-Endpunkte manuell testen, Auth-Header prüfen, Responses analysieren.',
+  },
+  {
+    path:    '/tool/sqlmap',
+    icon:    DatabaseOutlined,
+    name:    'sqlmap',
+    color:   '#d4380d',
+    tagline: 'SQL Injection Scanner',
+    desc:    'Erkennt und exploitet SQL-Injection-Schwachstellen automatisch. Kann Datenbanken, Tabellen und Daten auslesen.',
+    when:    'Wenn eine Web-App Datenbankparameter hat — nach dem ersten Recon gezielt testen.',
   },
   {
     path:    '/tool/metasploit',

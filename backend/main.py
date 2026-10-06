@@ -23,6 +23,7 @@ from .tools.wenum import WenumTool
 from .tools.nikto import NiktoTool
 from .tools.nuclei import NucleiTool
 from .tools.hydra import HydraTool
+from .tools.sqlmap import SqlmapTool
 
 Base.metadata.create_all(bind=engine)
 run_migrations()
@@ -36,6 +37,7 @@ TOOLS = {
     "nikto":        NiktoTool(),
     "nuclei":       NucleiTool(),
     "hydra":        HydraTool(),
+    "sqlmap":       SqlmapTool(),
 }
 
 WORDLIST_PRESETS = [

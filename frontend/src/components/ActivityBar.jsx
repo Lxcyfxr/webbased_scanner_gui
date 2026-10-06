@@ -1,5 +1,5 @@
 import { Tooltip, theme as antTheme } from 'antd'
-import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined, KeyOutlined } from '@ant-design/icons'
+import { RadarChartOutlined, BugOutlined, HistoryOutlined, AimOutlined, SafetyOutlined, ThunderboltOutlined, ApiOutlined, KeyOutlined, DatabaseOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const ITEMS = [
@@ -8,6 +8,7 @@ const ITEMS = [
   { path: '/tool/nikto',      icon: <SafetyOutlined />,       label: 'Nikto'          },
   { path: '/tool/nuclei',     icon: <ThunderboltOutlined />, label: 'Nuclei'         },
   { path: '/tool/hydra',      icon: <KeyOutlined />,         label: 'Hydra'          },
+  { path: '/tool/sqlmap',     icon: <DatabaseOutlined />,    label: 'sqlmap'         },
   { path: '/tool/http',       icon: <ApiOutlined />,         label: 'HTTP Client'    },
   { path: '/tool/metasploit', icon: <AimOutlined />,         label: 'Metasploit'     },
   { path: '/history',         icon: <HistoryOutlined />,    label: 'History'        },
