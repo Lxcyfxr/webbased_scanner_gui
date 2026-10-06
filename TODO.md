@@ -24,6 +24,6 @@
 
 ## Priorität (nächste Schritte)
 1. [x] **Nikto** — einfach zu integrieren, direkte XML-Ausgabe
-2. [ ] **Nuclei** — sehr mächtig, JSON-Output, viele Templates
+2. [x] **Nuclei** — sehr mächtig, JSON-Output, viele Templates
 3. [ ] **Hydra** — passt gut zu den bestehenden Fuzzing-Tools
 4. [ ] **sqlmap** — logische Erweiterung nach dem Directory-Fuzzing
