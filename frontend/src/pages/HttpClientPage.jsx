@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Layout, Input, Select, Button, Form, Tabs, Tag, Typography,
+  Layout, Input, Select, Button, Form, Tabs, Tag, Typography, Space,
   Divider, Switch, InputNumber, theme as antTheme, Badge,
 } from 'antd'
 import {
