@@ -3,4 +3,5 @@ uvicorn[standard]
 sqlalchemy
 pydantic
 aiofiles
+httpx
 pymetasploit3
