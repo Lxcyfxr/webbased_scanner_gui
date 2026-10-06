@@ -15,7 +15,7 @@
 - [ ] **wfuzz** — Alternative zu ffuf, sehr flexibel
 
 ## Password / Auth
-- [ ] **Hydra** — Brute-Force für SSH, FTP, HTTP, RDP, etc.
+- [x] **Hydra** — Brute-Force für SSH, FTP, HTTP, RDP, etc.
 - [ ] **Hashcat / John the Ripper** — Offline-Passwort-Cracking
 
 ## Netzwerk / Traffic
@@ -25,5 +25,5 @@
 ## Priorität (nächste Schritte)
 1. [x] **Nikto** — einfach zu integrieren, direkte XML-Ausgabe
 2. [x] **Nuclei** — sehr mächtig, JSON-Output, viele Templates
-3. [ ] **Hydra** — passt gut zu den bestehenden Fuzzing-Tools
+3. [x] **Hydra** — passt gut zu den bestehenden Fuzzing-Tools
 4. [ ] **sqlmap** — logische Erweiterung nach dem Directory-Fuzzing

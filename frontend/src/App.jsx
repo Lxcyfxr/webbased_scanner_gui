@@ -9,6 +9,7 @@ import FuzzingPage    from './pages/FuzzingPage'
 import MsfPage        from './pages/MsfPage'
 import NiktoPage      from './pages/NiktoPage'
 import NucleiPage     from './pages/NucleiPage'
+import HydraPage      from './pages/HydraPage'
 import HistoryPage    from './pages/HistoryPage'
 import { loadProxy } from './utils/proxy'
 
@@ -62,6 +63,7 @@ function Shell({ isDark, onToggleDark }) {
           <Route path="/tool/metasploit" element={<MsfPage />} />
           <Route path="/tool/nikto"      element={<NiktoPage />} />
           <Route path="/tool/nuclei"     element={<NucleiPage />} />
+          <Route path="/tool/hydra"      element={<HydraPage />} />
           <Route path="/history"         element={<HistoryPage />} />
         </Routes>
       </Layout>

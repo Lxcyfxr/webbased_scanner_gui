@@ -21,6 +21,7 @@ from .tools.gobuster import GobusterTool
 from .tools.wenum import WenumTool
 from .tools.nikto import NiktoTool
 from .tools.nuclei import NucleiTool
+from .tools.hydra import HydraTool
 
 Base.metadata.create_all(bind=engine)
 run_migrations()
@@ -33,6 +34,7 @@ TOOLS = {
     "wenum":        WenumTool(),
     "nikto":        NiktoTool(),
     "nuclei":       NucleiTool(),
+    "hydra":        HydraTool(),
 }
 
 WORDLIST_PRESETS = [
